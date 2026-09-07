@@ -21,6 +21,7 @@ import { imageBase64 as portableImage } from "../api/ori-media/portable/data";
 import { imageBase64 as deployedImage } from "../api/ori-media/deployed/data";
 import { imageBase64 as damagedImage } from "../api/ori-media/damaged/data";
 import styles from "./page.module.css";
+import orbit from "./orbit.module.css";
 
 export const metadata: Metadata = {
   title: "ORI TAC OPS | Human-Controlled Damaged-Label Recovery",
@@ -106,24 +107,50 @@ export default function OriTacOpsLandingPage() {
             </div>
           </div>
 
-          <div className={styles.heroVisual} style={{ minHeight: 690, padding: 24, display: "grid", placeItems: "center" }}>
-            <div style={{ position: "relative", width: "100%", maxWidth: 520, aspectRatio: "1 / 1", display: "grid", placeItems: "center" }}>
-              <div style={{ position: "absolute", inset: "13%", border: "1px solid rgba(112,232,255,.34)", borderRadius: "50%" }} />
-              <div style={{ position: "absolute", inset: "26%", border: "1px solid rgba(216,255,63,.52)", borderRadius: "50%" }} />
-              <div style={{ zIndex: 3, width: 165, height: 165, borderRadius: "50%", background: "#f2ecdf", color: "#11181b", border: "3px solid #d8ff3f", display: "grid", placeItems: "center", textAlign: "center", padding: 20, boxShadow: "0 20px 60px rgba(0,0,0,.45)" }}>
-                <div><ShieldCheck size={30} color="#728318" /><strong style={{ display: "block", marginTop: 9, letterSpacing: ".12em" }}>HUMAN AUTHORITY</strong><small>final</small></div>
+          <div className={`${styles.heroVisual} ${orbit.panel}`} aria-label="ORI TAC OPS work-cell diagram">
+            <div className={styles.visualGrid} />
+            <div className={orbit.orbit}>
+              <article className={orbit.station}>
+                <ScanLine size={18} aria-hidden="true" />
+                <div>
+                  <strong>01 Capture</strong>
+                  <span>Photograph what survived. Preserve readable evidence.</span>
+                </div>
+              </article>
+              <article className={orbit.station}>
+                <FileSearch size={18} aria-hidden="true" />
+                <div>
+                  <strong>02 OCR assist</strong>
+                  <span>Propose readable fields. Leave uncertainty visible.</span>
+                </div>
+              </article>
+              <div className={orbit.orbitCoreWrap}>
+                <span className={orbit.orbitRing} aria-hidden="true" />
+                <span className={orbit.orbitRingInner} aria-hidden="true" />
+                <div className={orbit.orbitCore}>
+                  <ShieldCheck size={28} color="#728318" aria-hidden="true" />
+                  <strong>HUMAN AUTHORITY</strong>
+                  <small>final · employee verifies</small>
+                </div>
+                <div className={orbit.orbitHandoff}>03 Verify → 05 Approved handoff</div>
               </div>
-              {[
-                ["CAPTURE", "12%", "8%"],
-                ["OCR ASSIST", "12%", "auto"],
-                ["PRINT OUTPUT", "auto", "8%"],
-                ["TELEMETRY", "auto", "auto"],
-              ].map(([label, top, left], index) => (
-                <div key={label} style={{ position: "absolute", top: top === "auto" ? undefined : top, bottom: top === "auto" ? "12%" : undefined, left: left === "auto" ? undefined : left, right: left === "auto" ? "8%" : undefined, padding: "11px 14px", borderRadius: 999, border: "1px solid rgba(255,255,255,.18)", background: "#0b1217", color: index % 2 ? "#70e8ff" : "#d8ff3f", fontSize: 10, fontWeight: 900, letterSpacing: ".08em" }}>{label}</div>
-              ))}
-              <div style={{ position: "absolute", right: 12, bottom: 12, left: 12, padding: 14, borderRadius: 16, background: "rgba(5,9,12,.88)", border: "1px solid rgba(216,255,63,.3)", textAlign: "center", fontSize: 12 }}>
+              <article className={orbit.station}>
+                <Printer size={18} aria-hidden="true" />
+                <div>
+                  <strong>04 Print output</strong>
+                  <span>Helper label marked NOT POSTAGE and HUMAN VERIFIED.</span>
+                </div>
+              </article>
+              <article className={orbit.station}>
+                <Gauge size={18} aria-hidden="true" />
+                <div>
+                  <strong>06 Telemetry</strong>
+                  <span>Time, corrections, outcome, and unresolved risk.</span>
+                </div>
+              </article>
+              <p className={orbit.orbitCaption}>
                 Operator + evidence + OCR + printer + approved handoff + telemetry
-              </div>
+              </p>
             </div>
           </div>
         </section>
@@ -173,12 +200,12 @@ export default function OriTacOpsLandingPage() {
             <h2>ORI TAC OPS is an OI SUITe experiment disguised as a damaged-label tool.</h2>
             <p>The useful product is not “AI reads a label.” The useful product is the operating architecture around the capability: employee role, source evidence, authority limits, correction path, hardware, training, exception routing, telemetry, and recovery receipt.</p>
             <p>The same method applies to warehouse automation, installation, software implementation, maintenance support, customer turnover, and any environment where physical operations and digital systems meet.</p>
-            <a className={styles.darkLink} href="/toyota-bridge">See Mason&apos;s Toyota role-fit case <ArrowRight size={16} /></a>
+            <a className={styles.darkLink} href="/toyota-bridge">See Mason's Toyota role-fit case <ArrowRight size={16} /></a>
           </div>
         </section>
 
         <section className={styles.photoSection}>
-          <div className={styles.photoHeader}><div><div className={styles.sectionLabel}>Field evidence</div><h2>The prototype is real.</h2><p>The kit and work-cell photos are from the personal test article. The damaged-label image is from the package delivered to Mason&apos;s home that sparked the idea. Personal address and tracking data are removed from the public version.</p></div><BadgeCheck size={33} /></div>
+          <div className={styles.photoHeader}><div><div className={styles.sectionLabel}>Field evidence</div><h2>The prototype is real.</h2><p>The kit and work-cell photos are from the personal test article. The damaged-label image is from the package delivered to Mason's home that sparked the idea. Personal address and tracking data are removed from the public version.</p></div><BadgeCheck size={33} /></div>
         </section>
 
         <section className={styles.truthSection}><ShieldCheck size={28} /><div><strong>Public truth boundary</strong><p>ORI TAC OPS is an independent NULLWORKS human-centered logistics exception-recovery concept with a working portable prototype and a controlled-pilot request. It is not an approved, purchased, connected, or deployed USPS production system. No controlled pilot has validated exact savings or return on investment. USPS and Toyota do not sponsor or endorse this page. Human authority remains final.</p></div></section>

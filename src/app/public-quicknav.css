@@ -1,5 +1,5 @@
 /* Shared NULLWORKS public navigation + narrow compatibility fixes. */
-body { padding-bottom: 74px; }
+body { padding-bottom: 88px; }
 
 .nw-public-quicknav {
   position: fixed !important;
@@ -7,10 +7,10 @@ body { padding-bottom: 74px; }
   bottom: max(10px, env(safe-area-inset-bottom)) !important;
   transform: translateX(-50%) !important;
   z-index: 1000 !important;
-  width: min(680px, calc(100% - 24px)) !important;
+  width: min(720px, calc(100% - 16px)) !important;
   display: grid !important;
-  grid-template-columns: repeat(4, 1fr) !important;
-  gap: 6px !important;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  gap: 5px !important;
   padding: 6px !important;
   border: 1px solid rgba(191,151,78,.55) !important;
   border-radius: 18px !important;
@@ -23,20 +23,21 @@ body { padding-bottom: 74px; }
   align-items: center;
   justify-content: center;
   min-height: 42px;
-  padding: 8px 8px;
+  padding: 8px 4px;
   border: 1px solid rgba(255,255,255,.12);
   border-radius: 13px;
   background: rgba(255,255,255,.055);
   color: #f5ead5 !important;
   text-decoration: none;
-  font: 800 12px/1.1 Inter,ui-sans-serif,system-ui,sans-serif;
+  font: 800 11px/1.1 Inter,ui-sans-serif,system-ui,sans-serif;
+  text-align: center;
 }
 
 /* Desktop: compact utility bar, not four upholstered ottomans. */
 @media (min-width: 761px) {
   .nw-public-quicknav {
     width: auto !important;
-    grid-template-columns: repeat(4, minmax(88px, 108px)) !important;
+    grid-template-columns: repeat(5, minmax(84px, 108px)) !important;
     gap: 4px !important;
     padding: 4px !important;
     border-radius: 14px !important;
@@ -49,15 +50,16 @@ body { padding-bottom: 74px; }
   }
 }
 
-/* Mobile keeps generous touch targets. */
+/* Mobile keeps generous touch targets in one row. */
 @media (max-width: 760px) {
   .nw-public-quicknav {
-    width: min(680px, calc(100% - 24px)) !important;
-    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    width: min(720px, calc(100% - 16px)) !important;
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
   }
   .nw-public-quicknav a {
-    min-height: 42px !important;
-    padding: 8px 6px !important;
+    min-height: 40px !important;
+    padding: 6px 2px !important;
+    font-size: 10px !important;
   }
 }
 

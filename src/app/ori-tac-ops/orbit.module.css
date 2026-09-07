@@ -1,10 +1,10 @@
 /* ORI TAC OPS hero orbit — human authority stays in the center */
 .panel {
   min-height: 0 !important;
+  overflow: visible !important;
   padding: 28px 22px 22px;
   display: grid;
   place-items: center;
-  overflow: visible;
 }
 
 .orbit {

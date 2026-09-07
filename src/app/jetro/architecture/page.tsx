@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "https://nullworks.systems/jetro/architecture" },
 };
 
-const IMG = "https://nullworks-jetro.vercel.app/nullworks-architecture.jpg";
+const IMG = "https://nullworks-jetro.vercel.app/nullworks-architecture.jpg?v=20260907";
 
 export default function JetroArchitecturePage() {
   return (
@@ -37,7 +37,12 @@ export default function JetroArchitecturePage() {
         <Link href="/jetro" style={{ color: "#eaf6ff", textDecoration: "none", fontWeight: 800, fontSize: 13 }}>
           ← Back to JETRO MVP
         </Link>
-        <span style={{ color: "#9aa8ae", fontSize: 11, letterSpacing: ".04em" }}>Pinch, pan, or scroll to read</span>
+        <span style={{ color: "#9aa8ae", fontSize: 11, letterSpacing: ".04em" }}>
+          Pinch, pan, or scroll to read{" · "}
+          <a href={IMG} style={{ color: "#eaf6ff" }}>
+            open original
+          </a>
+        </span>
       </div>
       <div
         style={{
@@ -51,8 +56,17 @@ export default function JetroArchitecturePage() {
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={IMG}
+          width={1000}
+          height={1500}
           alt="NULLWORKS architecture: a layer above AI. Plug in any AI. Execute in the real world."
-          style={{ display: "block", width: 1200, maxWidth: "100%", height: "auto", margin: "0 auto" }}
+          style={{
+            display: "block",
+            width: 1000,
+            minWidth: 1000,
+            maxWidth: "none",
+            height: "auto",
+            margin: "0 auto",
+          }}
         />
       </div>
     </main>

@@ -43,6 +43,7 @@ Public capabilities that may be reached from Tier 1 but do not define the whole 
 - `/airlift`
 - `/voice-foundry`
 - `/receipt-wallet`
+- `/jetro` — JETRO MVP demonstration door; owned by `/japan`
 
 Promotion into the global sitemap is deliberate and may be narrower than this list.
 
@@ -74,6 +75,7 @@ Purpose-built entry routes. They inherit corporate truth but may have audience-s
 - `/executive-brief`
 - `/operation-moonshot`
 - `/kintsugi`
+- `/jetro`
 
 These must never invent affiliations, endorsements, customers, or government relationships.
 

@@ -2,7 +2,7 @@ import AnvilShell from "../AnvilShell";
 import ArtistCard from "../ArtistCard";
 import { projects } from "../catalog";
 
-const ARTIST_SLUGS = ["9-volt","blood-pagoda","penny","nan-violence","nan-wisdom","non-opera-italica","swiss-doom-opera","mountain-lords","harescramble","silt-serpent","limestone-kin"];
+const ARTIST_SLUGS = ["9-volt","blood-pagoda","penny","nan-violence","nan-wisdom","non-opera-italica","swiss-doom-opera","mountain-lords","harescramble","silt-serpent","limestone-kin","crownrot"];
 
 export default function Page(){
   const artists=projects.filter(p=>ARTIST_SLUGS.includes(p.slug));

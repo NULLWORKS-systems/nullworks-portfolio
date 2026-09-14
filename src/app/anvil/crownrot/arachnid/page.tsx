@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import styles from "./release.module.css";
 
-const COVER = "/anvil/crownrot/cover.png";
-const AUDIO = "/anvil/crownrot/arachnid.mp3";
+const MEDIA = "https://foveyfclihpsnwhfchib.supabase.co/storage/v1/object/public/anvil-media/crownrot";
+const COVER = `${MEDIA}/cover.png`;
+const AUDIO = `${MEDIA}/01-arachnid.mp3`;
 const SPOTIFY = "https://open.spotify.com/track/7nb7DGaqzCvPCUYfmsNyup";
 
 export const metadata: Metadata = {
@@ -68,14 +68,12 @@ export default function ArachnidReleasePage() {
 
       <section className={styles.hero}>
         <div className={styles.artWrap}>
-          <Image
+          <img
             className={styles.art}
             src={COVER}
             alt="ARACHNID cover art: CROWNROT / Cooper Webb #2 under a giant spider, presented by NULLWORKS"
             width={1400}
             height={1400}
-            priority
-            sizes="(max-width: 820px) 92vw, 48vw"
           />
           <span className={styles.stamp}>NULLWORKS PRESENTS / 04:13</span>
         </div>

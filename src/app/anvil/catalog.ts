@@ -162,6 +162,23 @@ export const projects: AnvilProject[] = [
     facts: ["Night hill-country identity", "Church-on-the-ridge visual contract", "Acoustic and electric in the same room", "The hills remember what people drop"],
     works: ["THE HILLS STILL KNOW"],
   },
+  {
+    slug: "crownrot",
+    name: "CROWNROT",
+    kicker: "ATHLETE SOUNDTRACK / MODERN METAL",
+    summary: "Original music built from an athlete's competitive identity instead of borrowed third-party tracks. ARACHNID is the proof-of-concept soundtrack for Cooper Webb.",
+    status: "ATHLETE SOUNDTRACK",
+    accent: "#ff4d57",
+    accent2: "#8a8f98",
+    texture: "DIRT / STEEL / STADIUM LIGHT",
+    facts: [
+      "Independent proof of concept — not an official affiliation",
+      "Music built FROM the athlete, not licensed onto the athlete",
+      "Direct site playback without Spotify",
+      "Custom soundtrack as brand architecture, not afterthought"
+    ],
+    works: ["ARACHNID", "KNUCKLES"],
+  },
 ];
 
 export const metaPages = [

@@ -23,7 +23,7 @@
 .identity{display:flex;gap:18px;align-items:center;margin-top:0;position:relative;z-index:2;min-width:0}
 .copy{min-width:0;padding-top:8px}
 .avatar{width:142px;height:142px;margin-top:-48px;border-radius:50%;border:5px solid #0b1118;overflow:hidden;background:#111;flex-shrink:0;box-shadow:0 8px 24px #0006}
-.avatar img{width:100%;height:100%;object-fit:cover;object-position:center 28%;display:block}
+.avatar img{width:100%;height:100%;object-fit:cover;object-position:center 42%;display:block}
 .name{font-size:31px;font-weight:800;margin:0;line-height:1.1}
 .headline{color:#dfe8f2;margin-top:6px;line-height:1.35}
 .sub{color:var(--muted);font-size:13px;margin-top:4px;line-height:1.4}
@@ -65,6 +65,7 @@
   .identity{align-items:center;margin-top:0}
   .avatar{width:96px;height:96px;margin-top:-28px}
   .cover{padding:22px 20px 18px}
+  .cover p{display:none}
   .cover h1{font-size:28px}
   .systems{grid-template-columns:1fr}
   .name{font-size:24px}
@@ -74,7 +75,6 @@
   .wrap{padding:0 12px 40px}
   .hero{margin-top:12px;border-radius:18px}
   .cover{padding:18px 16px 16px}
-  .cover p{display:none}
   .profile{padding:0 16px 18px;gap:14px}
   .identity{gap:12px;align-items:center}
   .avatar{width:84px;height:84px;margin-top:-22px;border-width:4px}

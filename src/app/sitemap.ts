@@ -10,6 +10,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/proof",
     "/research",
     "/company",
+    "/mason",
     "/contact",
     "/japan",
     "/jetro",

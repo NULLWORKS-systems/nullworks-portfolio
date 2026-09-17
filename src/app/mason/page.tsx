@@ -72,7 +72,7 @@ export default function MasonProfilePage() {
               <div className={styles.avatar}>
                 <img src={MASON_PORTRAIT} alt="Mason Perry, founder of NULLWORKS" />
               </div>
-              <div>
+              <div className={styles.copy}>
                 <h1 className={styles.name}>Mason Perry</h1>
                 <div className={styles.headline}>Founder, NULLWORKS · Operational Intelligence Systems Architect</div>
                 <div className={styles.sub}>Human-centered operational architecture for AI workers and consequential systems</div>

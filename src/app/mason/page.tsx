@@ -5,7 +5,7 @@ import styles from "./mason.module.css";
 export const metadata: Metadata = {
   title: "Mason Perry — Founder",
   description:
-    "Mason Perry is the founder of NULLWORKS and an Operational Intelligence Systems Architect building governed operating structures around human + AI work.",
+    "Mason Perry is the founder of NULLWORKS LLC and an Operational Intelligence Systems Architect building governed operating structures around human + AI work.",
   alternates: { canonical: "/mason" },
   openGraph: {
     title: "Mason Perry — Founder, NULLWORKS",
@@ -25,7 +25,10 @@ const jsonLd = {
   worksFor: {
     "@type": "Organization",
     name: "NULLWORKS",
+    legalName: "NULLWORKS LLC",
     url: "https://nullworks.systems",
+    foundingDate: "2026-08-28",
+    identifier: "Arizona Business ID 25114608",
   },
   knowsAbout: [
     "Operational Intelligence systems architecture",
@@ -273,7 +276,10 @@ export default function MasonProfilePage() {
               <h2>Machine-readable identity</h2>
               <p className={styles.muted}>
                 This page includes structured Person metadata so humans and automated systems can recover the same basic
-                identity and role.
+                identity and role. The organization record is NULLWORKS LLC, Arizona Business ID 25114608.
+              </p>
+              <p className={styles.muted}>
+                Verified legal identity lives on the <a href="/company">company page</a>.
               </p>
               <div className={styles.note}>
                 Public identity ≠ operational authority. This profile describes the human operator; it does not grant an AI,
@@ -284,7 +290,7 @@ export default function MasonProfilePage() {
         </div>
 
         <footer className={styles.footer}>
-          <div>NULLWORKS · Human-centered Operational Intelligence systems architecture</div>
+          <div>NULLWORKS LLC · Arizona · Business ID 25114608 · Human-centered Operational Intelligence systems architecture</div>
           <div>Canonical profile · nullworks.systems/mason</div>
         </footer>
       </div>

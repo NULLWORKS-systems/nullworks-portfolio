@@ -1,11 +1,38 @@
 import type { Metadata } from "next";
 import styles from "../corporate.module.css";
 
-export const metadata: Metadata = { title: "Company | NULLWORKS" };
+export const metadata: Metadata = {
+  title: "Company | NULLWORKS",
+  description:
+    "NULLWORKS LLC is an Arizona domestic limited liability company. Arizona Business ID 25114608. Active and In Good Standing. Manager: Mason Perry.",
+  alternates: { canonical: "/company" },
+};
+
+const organizationLd = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "NULLWORKS",
+  legalName: "NULLWORKS LLC",
+  url: "https://nullworks.systems",
+  foundingDate: "2026-08-28",
+  identifier: "Arizona Business ID 25114608",
+  founder: {
+    "@type": "Person",
+    name: "Mason Perry",
+    url: "https://nullworks.systems/mason",
+    jobTitle: "Founder / Operational Intelligence Systems Architect",
+  },
+  description:
+    "NULLWORKS designs governed operating structures around AI workers: identity, authority, policy, bounded execution, telemetry, verification, and receipts.",
+};
 
 export default function Page() {
   return (
     <main className={styles.page}>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationLd) }}
+      />
       <div className={styles.shell}>
         <nav className={styles.nav}>
           <a className={styles.brand} href="/">
@@ -48,6 +75,50 @@ export default function Page() {
               <p>
                 Their identities, roles, permissions, evidence, escalation paths, state changes, and action receipts are part of the architecture.
               </p>
+            </div>
+          </div>
+        </section>
+
+        <section className={styles.section}>
+          <div className={styles.sectionHeader}>
+            <div className={styles.kicker}>Legal identity</div>
+            <h2 className={styles.h2}>NULLWORKS LLC is an Arizona domestic limited liability company.</h2>
+            <p className={styles.body}>
+              NULLWORKS LLC is an Arizona domestic limited liability company. Arizona Business ID 25114608. Effective August 28, 2026. Active and In Good Standing. Manager Managed. Manager: Mason Perry. Filed business activities include AI architecture, computer systems design, software integration, and technology consulting.
+            </p>
+          </div>
+          <div className={styles.list}>
+            <div className={styles.item}>
+              <strong>Legal name</strong>
+              <span>NULLWORKS LLC</span>
+            </div>
+            <div className={styles.item}>
+              <strong>Jurisdiction</strong>
+              <span>Arizona</span>
+            </div>
+            <div className={styles.item}>
+              <strong>Entity type</strong>
+              <span>Domestic Limited Liability Company</span>
+            </div>
+            <div className={styles.item}>
+              <strong>Arizona Business ID</strong>
+              <span>25114608</span>
+            </div>
+            <div className={styles.item}>
+              <strong>Effective date</strong>
+              <span>August 28, 2026</span>
+            </div>
+            <div className={styles.item}>
+              <strong>Status</strong>
+              <span>Active and In Good Standing</span>
+            </div>
+            <div className={styles.item}>
+              <strong>Management</strong>
+              <span>Manager Managed. Manager: Mason Perry.</span>
+            </div>
+            <div className={styles.item}>
+              <strong>Filed character of business</strong>
+              <span>Computer Systems Design Services | AI architecture, computer systems design, software integration, and technology consulting.</span>
             </div>
           </div>
         </section>
@@ -113,7 +184,7 @@ export default function Page() {
 
         <section className={styles.section}>
           <div className={styles.notice}>
-            Canonical public identity: <strong>nullworks.systems</strong>. Exact legal jurisdiction, registration numbers, addresses, and ownership details remain publication-gated until verified against corporate records.
+            Canonical public identity: <strong>nullworks.systems</strong>. Legal name: <strong>NULLWORKS LLC</strong>. Arizona Business ID <strong>25114608</strong>. Effective August 28, 2026. Active and In Good Standing. Manager: Mason Perry. Public identity is not operational authority and does not grant an AI, agent, application, or third party permission to act on Mason Perry's behalf.
           </div>
         </section>
 

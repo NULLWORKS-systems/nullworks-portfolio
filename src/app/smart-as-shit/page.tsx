@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import styles from "./smart.module.css";
 
 const PAGE_URL = "https://nullworks.systems/smart-as-shit";
-const POSTER_URL = "https://nullworks.systems/smart-as-shit/poster.png";
-const PAPER_URL = "https://nullworks.systems/smart-as-shit/paper.pdf";
+const POSTER_IMAGE_URL = "https://nullworks.systems/smart-as-shit/poster.png.pdf";
+const POSTER_PDF_URL = "https://nullworks.systems/smart-as-shit/poster.png.pdf";
+const PAPER_URL = "https://nullworks.systems/smart-as-shit/paper.pdf.pdf";
 
 export const metadata: Metadata = {
   title: "Smart as Shit: Finding Data in Unexpected Places | Mason Perry · NULLWORKS",
@@ -16,14 +17,14 @@ export const metadata: Metadata = {
     title: "Smart as Shit: Finding Data in Unexpected Places",
     description:
       "What wastewater, broken traffic counters, and systems thinking can teach us about measuring the real world.",
-    images: [{ url: POSTER_URL, width: 1080, height: 1620, alt: "Smart as Shit research poster" }],
+    images: [{ url: POSTER_IMAGE_URL, width: 1080, height: 1620, alt: "Smart as Shit research poster" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Smart as Shit: Finding Data in Unexpected Places",
     description:
       "In spring the sewer was not counting tourists. It was counting the thaw. In July it was counting people.",
-    images: [POSTER_URL],
+    images: [POSTER_IMAGE_URL],
   },
 };
 
@@ -45,7 +46,7 @@ const schema = {
     url: "https://nullworks.systems",
   },
   url: PAGE_URL,
-  image: POSTER_URL,
+  image: POSTER_IMAGE_URL,
   encoding: {
     "@type": "MediaObject",
     contentUrl: PAPER_URL,
@@ -81,8 +82,8 @@ export default function SmartAsShitPage() {
             <a className={styles.primary} href={PAPER_URL}>
               Read the paper
             </a>
-            <a className={styles.secondary} href="#poster">
-              See the poster
+            <a className={styles.secondary} href={POSTER_PDF_URL}>
+              Open the poster
             </a>
           </div>
         </header>
@@ -92,11 +93,15 @@ export default function SmartAsShitPage() {
         </blockquote>
 
         <section id="poster" className={styles.posterBlock}>
-          <img
-            className={styles.poster}
-            src="/smart-as-shit/poster.png"
-            alt="Smart as Shit research poster summarizing July control, March weather correlation, member-share stability, and the thaw-versus-people finding"
-          />
+          <a href={POSTER_PDF_URL} className={styles.posterFrame} aria-label="Open Smart as Shit research poster PDF">
+            <object
+              className={styles.poster}
+              data={POSTER_PDF_URL}
+              type="application/pdf"
+            >
+              Research poster PDF
+            </object>
+          </a>
           <p className={styles.caption}>
             Research poster. Same argument as the paper, compressed for a cold LinkedIn read.
           </p>
@@ -162,10 +167,10 @@ export default function SmartAsShitPage() {
           </p>
           <div className={styles.actions}>
             <a className={styles.primary} href={PAPER_URL}>
-              Download PDF
+              Download paper
             </a>
-            <a className={styles.secondary} href="/mason">
-              Mason Perry
+            <a className={styles.secondary} href={POSTER_PDF_URL}>
+              Download poster
             </a>
           </div>
         </section>

@@ -120,12 +120,22 @@
   margin: 28px 0 40px;
 }
 
+.posterFrame {
+  display: block;
+  width: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #02080d;
+  border: 1px solid #243542;
+}
+
 .poster {
   width: 100%;
-  height: auto;
-  border-radius: 12px;
+  height: min(86vh, 1280px);
+  min-height: 720px;
   display: block;
   background: #02080d;
+  border: 0;
 }
 
 .caption {
@@ -190,5 +200,9 @@
   }
   .hero h1 {
     font-size: 44px;
+  }
+  .poster {
+    height: 70vh;
+    min-height: 480px;
   }
 }

@@ -3,7 +3,8 @@ import styles from "./smart.module.css";
 
 const PAGE_URL = "https://nullworks.systems/smart-as-shit";
 const POSTER_PDF_URL = "https://nullworks.systems/smart-as-shit/poster.png.pdf";
-const POSTER_PREVIEW_URL = "/smart-as-shit/poster-card";
+const POSTER_PREVIEW_URL =
+  "https://foveyfclihpsnwhfchib.supabase.co/storage/v1/object/public/anvil-media/smart-as-shit/poster.jpg";
 const PAPER_URL = "https://nullworks.systems/smart-as-shit/paper.pdf.pdf";
 
 export const metadata: Metadata = {
@@ -44,6 +45,7 @@ const schema = {
     url: "https://nullworks.systems",
   },
   url: PAGE_URL,
+  image: POSTER_PREVIEW_URL,
   encoding: {
     "@type": "MediaObject",
     contentUrl: PAPER_URL,
@@ -71,23 +73,8 @@ export default function SmartAsShitPage() {
           <p className={styles.eyebrow}>Working paper · September 2026 · Big Bear, California</p>
           <h1>Smart as Shit</h1>
           <p className={styles.sub}>Finding Data in Unexpected Places</p>
-          <p className={styles.deck}>
-            What wastewater, broken traffic counters, and systems thinking can teach us about measuring the real world.
-          </p>
           <p className={styles.byline}>Mason Perry · NULLWORKS</p>
-          <div className={styles.actions}>
-            <a className={styles.primary} href={PAPER_URL}>
-              Read the paper
-            </a>
-            <a className={styles.secondary} href={POSTER_PDF_URL}>
-              Open the poster
-            </a>
-          </div>
         </header>
-
-        <blockquote className={styles.quote}>
-          In spring the sewer was not counting tourists. It was counting the thaw. In July it was counting people.
-        </blockquote>
 
         <section id="poster" className={styles.posterBlock}>
           <a href={POSTER_PDF_URL} className={styles.posterFrame} aria-label="Open Smart as Shit research poster PDF">
@@ -104,6 +91,19 @@ export default function SmartAsShitPage() {
             Research poster. Same argument as the paper, compressed for a cold LinkedIn read.
           </p>
         </section>
+
+        <blockquote className={styles.quote}>
+          In spring the sewer was not counting tourists. It was counting the thaw. In July it was counting people.
+        </blockquote>
+
+        <div className={styles.actions}>
+          <a className={styles.primary} href={PAPER_URL}>
+            Read the paper
+          </a>
+          <a className={styles.secondary} href={POSTER_PDF_URL}>
+            Open the poster
+          </a>
+        </div>
 
         <section className={styles.grid}>
           <article className={styles.card}>

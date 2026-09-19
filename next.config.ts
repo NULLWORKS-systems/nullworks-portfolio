@@ -19,6 +19,11 @@ const nextConfig: NextConfig = {
       { source: "/non-opera-italica", destination: "/anvil/non-opera-italica", permanent: true },
       { source: "/9v-vex-likes-sex", destination: "/anvil/9-volt", permanent: true },
       { source: "/vex-overdose-venice", destination: "/anvil/9-volt", permanent: true },
+
+      // Phone export names. iOS Files appended a second .pdf.
+      { source: "/smart-as-shit/paper.pdf", destination: "/smart-as-shit/paper.pdf.pdf", permanent: false },
+      { source: "/smart-as-shit/poster.png", destination: "/smart-as-shit/poster.png.pdf", permanent: false },
+      { source: "/smart-as-shit/poster.pdf", destination: "/smart-as-shit/poster.png.pdf", permanent: false },
     ];
   },
 

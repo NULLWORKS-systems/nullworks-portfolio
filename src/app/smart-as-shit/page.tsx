@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import styles from "./smart.module.css";
 
 const PAGE_URL = "https://nullworks.systems/smart-as-shit";
-const POSTER_IMAGE_URL = "https://nullworks.systems/smart-as-shit/poster.png.pdf";
 const POSTER_PDF_URL = "https://nullworks.systems/smart-as-shit/poster.png.pdf";
 const PAPER_URL = "https://nullworks.systems/smart-as-shit/paper.pdf.pdf";
 
@@ -17,14 +16,12 @@ export const metadata: Metadata = {
     title: "Smart as Shit: Finding Data in Unexpected Places",
     description:
       "What wastewater, broken traffic counters, and systems thinking can teach us about measuring the real world.",
-    images: [{ url: POSTER_IMAGE_URL, width: 1080, height: 1620, alt: "Smart as Shit research poster" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Smart as Shit: Finding Data in Unexpected Places",
     description:
       "In spring the sewer was not counting tourists. It was counting the thaw. In July it was counting people.",
-    images: [POSTER_IMAGE_URL],
   },
 };
 
@@ -46,7 +43,6 @@ const schema = {
     url: "https://nullworks.systems",
   },
   url: PAGE_URL,
-  image: POSTER_IMAGE_URL,
   encoding: {
     "@type": "MediaObject",
     contentUrl: PAPER_URL,
@@ -94,11 +90,7 @@ export default function SmartAsShitPage() {
 
         <section id="poster" className={styles.posterBlock}>
           <a href={POSTER_PDF_URL} className={styles.posterFrame} aria-label="Open Smart as Shit research poster PDF">
-            <object
-              className={styles.poster}
-              data={POSTER_PDF_URL}
-              type="application/pdf"
-            >
+            <object className={styles.poster} data={`${POSTER_PDF_URL}#view=FitH`} type="application/pdf">
               Research poster PDF
             </object>
           </a>
@@ -166,10 +158,10 @@ export default function SmartAsShitPage() {
             limitations, and references are in the PDF.
           </p>
           <div className={styles.actions}>
-            <a className={styles.primary} href={PAPER_URL}>
+            <a className={styles.primary} href={PAPER_URL} download>
               Download paper
             </a>
-            <a className={styles.secondary} href={POSTER_PDF_URL}>
+            <a className={styles.secondary} href={POSTER_PDF_URL} download>
               Download poster
             </a>
           </div>

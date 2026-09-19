@@ -1,0 +1,194 @@
+.page {
+  min-height: 100vh;
+  background: #071018;
+  color: #e8eef4;
+  font-family: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+}
+
+.shell {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 22px 18px 64px;
+}
+
+.nav {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: baseline;
+  margin-bottom: 36px;
+}
+
+.brand {
+  color: #f4fbff;
+  text-decoration: none;
+  font-family: Arial, Helvetica, sans-serif;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  font-size: 13px;
+}
+
+.brand span {
+  display: block;
+  color: #8aa0b3;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  font-size: 10px;
+  margin-top: 4px;
+}
+
+.links {
+  display: flex;
+  gap: 16px;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 13px;
+}
+
+.links a {
+  color: #c5d3de;
+  text-decoration: none;
+}
+
+.hero h1 {
+  font-size: clamp(42px, 8vw, 74px);
+  line-height: 0.92;
+  margin: 0 0 8px;
+  letter-spacing: -0.03em;
+}
+
+.sub {
+  font-size: clamp(20px, 3.4vw, 30px);
+  margin: 0 0 16px;
+  color: #d7e6f2;
+}
+
+.eyebrow,
+.byline,
+.caption,
+.label {
+  font-family: Arial, Helvetica, sans-serif;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #8aa0b3;
+  font-size: 11px;
+}
+
+.deck {
+  font-size: 20px;
+  line-height: 1.45;
+  max-width: 38rem;
+  color: #d3e0ea;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.primary,
+.secondary {
+  font-family: Arial, Helvetica, sans-serif;
+  text-decoration: none;
+  border-radius: 999px;
+  padding: 11px 16px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.primary {
+  background: #d7ecff;
+  color: #071018;
+}
+
+.secondary {
+  border: 1px solid #4d6678;
+  color: #e8eef4;
+}
+
+.quote {
+  margin: 36px 0;
+  padding: 22px 0;
+  border-top: 1px solid #243542;
+  border-bottom: 1px solid #243542;
+  font-size: clamp(22px, 3.6vw, 34px);
+  line-height: 1.25;
+}
+
+.posterBlock {
+  margin: 28px 0 40px;
+}
+
+.poster {
+  width: 100%;
+  height: auto;
+  border-radius: 12px;
+  display: block;
+  background: #02080d;
+}
+
+.caption {
+  margin-top: 10px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.card,
+.abstract,
+.note {
+  background: #0c1822;
+  border: 1px solid #243542;
+  border-radius: 14px;
+  padding: 18px;
+}
+
+.card h2,
+.abstract h2 {
+  margin: 8px 0 10px;
+  font-size: 22px;
+}
+
+.card p,
+.abstract p,
+.note p {
+  margin: 0 0 12px;
+  color: #c9d7e2;
+  line-height: 1.55;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 15px;
+}
+
+.abstract,
+.note {
+  margin-top: 16px;
+}
+
+.footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 36px;
+  color: #8aa0b3;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 12px;
+}
+
+@media (max-width: 720px) {
+  .grid,
+  .nav,
+  .footer {
+    display: block;
+  }
+  .links,
+  .footer span {
+    margin-top: 10px;
+  }
+  .hero h1 {
+    font-size: 44px;
+  }
+}

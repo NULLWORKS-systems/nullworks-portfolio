@@ -1,14 +1,22 @@
 import type { Metadata } from "next";
 
+const title = "Goblin Clock: The Amplification Seam | NULLWORKS";
+const description =
+  "A governed multi-node timing experiment using hash-chained relays, receipts, and compressed time to expose how tiny boundary errors become system-scale failures.";
+
 export const metadata: Metadata = {
-  title: "The Amplification Seam | Goblin Clock",
-  description:
-    "A live NULLWORKS visualization showing how an 11.861-second measurement seam becomes 19 minutes 46.1 seconds under 100× time compression.",
+  title,
+  description,
   openGraph: {
-    title: "The Amplification Seam | Goblin Clock",
-    description:
-      "AI does not create the seam. It compresses consequence until the seam becomes impossible to ignore.",
+    title,
+    description,
+    url: "https://nullworks.systems/goblin-amplification",
     type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title,
+    description,
   },
 };
 

@@ -3,6 +3,7 @@ import styles from "./smart.module.css";
 
 const PAGE_URL = "https://nullworks.systems/smart-as-shit";
 const POSTER_PDF_URL = "https://nullworks.systems/smart-as-shit/poster.png.pdf";
+const POSTER_PREVIEW_URL = "/smart-as-shit/poster-card";
 const PAPER_URL = "https://nullworks.systems/smart-as-shit/paper.pdf.pdf";
 
 export const metadata: Metadata = {
@@ -90,9 +91,14 @@ export default function SmartAsShitPage() {
 
         <section id="poster" className={styles.posterBlock}>
           <a href={POSTER_PDF_URL} className={styles.posterFrame} aria-label="Open Smart as Shit research poster PDF">
-            <object className={styles.poster} data={`${POSTER_PDF_URL}#view=FitH`} type="application/pdf">
-              Research poster PDF
-            </object>
+            <img
+              className={styles.poster}
+              src={POSTER_PREVIEW_URL}
+              alt="Smart as Shit research poster: In spring the sewer was not counting tourists. It was counting the thaw."
+              width={1000}
+              height={1500}
+            />
+            <span className={styles.posterHint}>Poster PDF · tap to open</span>
           </a>
           <p className={styles.caption}>
             Research poster. Same argument as the paper, compressed for a cold LinkedIn read.

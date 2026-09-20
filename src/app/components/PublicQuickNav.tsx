@@ -7,6 +7,7 @@ export default function PublicQuickNav() {
 
   // Private/reviewer, field-operation, and ANVIL creative surfaces must not inherit
   // the corporate conversion/navigation bar. ANVIL owns its own minimal navigation.
+  // Tinkerers run/live are dedicated consoles, not corporate pages.
   if (
     pathname?.startsWith('/pmar') ||
     pathname?.startsWith('/stallworks') ||
@@ -14,8 +15,8 @@ export default function PublicQuickNav() {
     pathname?.startsWith('/private') ||
     pathname?.startsWith('/workroom') ||
     pathname?.startsWith('/anvil') ||
-    pathname === '/tinkerers/run' ||
-    pathname === '/tinkerers/live'
+    pathname?.startsWith('/tinkerers/run') ||
+    pathname?.startsWith('/tinkerers/live')
   ) return null;
 
   return (

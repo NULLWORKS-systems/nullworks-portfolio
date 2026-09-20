@@ -165,6 +165,9 @@ export type LiveSnapshot = {
   qc_agrees: number;
   qc_disagrees: number;
   qc_indeterminate: number;
+  qc_pass: number;
+  qc_fail: number;
+  qc_unclear: number;
   human_accept: number;
   human_reject: number;
   human_challenge: number;

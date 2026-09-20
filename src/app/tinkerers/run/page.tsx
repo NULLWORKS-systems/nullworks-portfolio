@@ -93,6 +93,8 @@ export default function TinkerersRunPage() {
   const localEvidence = useMemo(() => validateWorkerArtifact(worker), [worker]);
   const evidence = serverEvidence || localEvidence;
   const relation = qcEvidenceRelation(qcClaim, evidence.verdict);
+  const semanticBlocks = (worker.match(/BLOCK\s+[1-5]:/g) || []).length;
+  const logicalLines = worker.length ? worker.replace(/^\uFEFF/, "").split(/\r?\n/).length : 0;
   const qcModel = sameQc ? modelWorker : modelQc;
   const qcPrompt = buildQcPrompt(worker);
 
@@ -310,6 +312,10 @@ export default function TinkerersRunPage() {
               This block is not an AI. NULLWORKS compares the raw worker output to the frozen contract.
               {serverEvidence ? " Server measurement used." : " Local measurement (server unreachable)."}
             </p>
+            <div style={rowStyle}>
+              <div><b>NEWLINE TEST</b><div style={{ color: "#8b9894", fontSize: 13 }}>REQUIREMENT · Exactly 5 logical lines<br />OBSERVED · {logicalLines} logical {logicalLines === 1 ? "line" : "lines"}<br />SEMANTIC BLOCKS · {semanticBlocks}</div></div>
+              <b>{logicalLines === 5 ? "RESULT PASS" : "RESULT FAIL"}</b>
+            </div>
             {evidence.requirements.map((item) => (
               <div key={item.id} style={rowStyle}>
                 <div>

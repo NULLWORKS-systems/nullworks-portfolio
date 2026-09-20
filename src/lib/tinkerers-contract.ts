@@ -89,7 +89,7 @@ export function validateWorkerArtifact(raw: string | null | undefined): Validato
   const requirements: RequirementResult[] = [
     {
       id: "count",
-      requirement: "Exactly five lines/blocks",
+      requirement: "Exactly 5 logical lines",
       expected: "5",
       observed: String(lines.length),
       verdict: lines.length === 5 ? "PASS" : "FAIL",
@@ -165,6 +165,9 @@ export type LiveSnapshot = {
   qc_agrees: number;
   qc_disagrees: number;
   qc_indeterminate: number;
+  qc_pass: number;
+  qc_fail: number;
+  qc_unclear: number;
   human_accept: number;
   human_reject: number;
   human_challenge: number;

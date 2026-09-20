@@ -89,11 +89,11 @@ export async function persistTinkerersSession(input: TinkerersSessionInput, vali
     completed_at: new Date().toISOString(),
   };
 
-  const response = await fetch(`${SUPABASE_URL}/rest/v1/tinkerers_sessions`, {
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/tinkerers_submit`, {
     method: "POST",
     cache: "no-store",
-    headers: headers({ Prefer: "return=representation" }),
-    body: JSON.stringify(row),
+    headers: headers(),
+    body: JSON.stringify({ payload: row }),
   });
   const text = await response.text();
   const body = text ? JSON.parse(text) : null;

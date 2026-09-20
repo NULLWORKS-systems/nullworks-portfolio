@@ -1,11 +1,14 @@
 import type { Metadata } from "next";
 import styles from "../corporate.module.css";
+import TinkerersQr from "./TinkerersQr";
 
 export const metadata: Metadata = {
   title: "AI Tinkerers Live Demo | NULLWORKS",
   description:
     "A five-minute live experiment: an AI worker can be wrong, the AI quality checker can be wrong, and human authority remains final.",
 };
+
+const RUN_URL = "https://nullworks.systems/tinkerers/run";
 
 export default function TinkerersPage() {
   return (
@@ -17,6 +20,8 @@ export default function TinkerersPage() {
             <span>AI TINKERERS · LIVE FAILURE TEST</span>
           </a>
           <div className={styles.links}>
+            <a href="/tinkerers/run">Run</a>
+            <a href="/tinkerers/live">Live</a>
             <a href="/architecture">Architecture</a>
             <a href="/proof">Proof</a>
             <a href="/">Home</a>
@@ -33,9 +38,16 @@ export default function TinkerersPage() {
             We run the test live. No slides. No canned result.
           </p>
           <div className={styles.actions}>
-            <a className={styles.primary} href="#experiment">See the experiment</a>
-            <a className={styles.secondary} href="/architecture">See the architecture</a>
+            <a className={styles.primary} href="/tinkerers/run">Run the experiment</a>
+            <a className={styles.secondary} href="#experiment">See the experiment</a>
           </div>
+          <div style={{ marginTop: 28 }}>
+            <TinkerersQr url={RUN_URL} />
+          </div>
+          <p className={styles.body} style={{ marginTop: 18, maxWidth: 720 }}>
+            Anonymous live experiment. Do not paste private, confidential, or sensitive information.
+            Experiment outputs may be retained for demo/research analysis.
+          </p>
         </section>
 
         <div className={styles.band}>

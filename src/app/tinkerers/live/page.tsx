@@ -17,6 +17,9 @@ const EMPTY: LiveSnapshot = {
   qc_agrees: 0,
   qc_disagrees: 0,
   qc_indeterminate: 0,
+  qc_pass: 0,
+  qc_fail: 0,
+  qc_unclear: 0,
   human_accept: 0,
   human_reject: 0,
   human_challenge: 0,
@@ -88,7 +91,14 @@ export default function TinkerersLivePage() {
           <Cell label="UNCLEAR" value={snapshot.worker_unclear} />
         </section>
 
-        <h2>Deterministic evidence</h2>
+        <h2>AI QC</h2>
+        <section style={grid}>
+          <Cell label="PASS" value={snapshot.qc_pass || 0} />
+          <Cell label="FAIL" value={snapshot.qc_fail || 0} />
+          <Cell label="UNCLEAR" value={snapshot.qc_unclear || 0} />
+        </section>
+
+        <h2>Evidence</h2>
         <section style={grid}>
           <Cell label="PASS" value={snapshot.evidence_pass} />
           <Cell label="FAIL" value={snapshot.evidence_fail} />

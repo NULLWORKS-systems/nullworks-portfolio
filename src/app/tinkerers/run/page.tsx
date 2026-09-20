@@ -337,6 +337,7 @@ export default function TinkerersRunPage() {
                 <div style={boardValue}>NULLWORKS observed {evidence.verdict}</div>
               </div>
             </div>
+            {relation === "DISAGREE" && <div style={{ ...signalStyle }}>AI QC ≠ EVIDENCE</div>}
             <p style={{ color: "#c7d0cd" }}>
               {relation === "AGREE" && "The checker AI’s claim matches the observed measurement."}
               {relation === "DISAGREE" && "The checker AI’s claim contradicts the observed measurement."}
@@ -418,6 +419,7 @@ export default function TinkerersRunPage() {
               <br />
               human disposition: {human}
               <br />
+              {human === "ACCEPT" && evidence.verdict === "FAIL" ? <><b>HUMAN OVERRIDE</b><br /></> : null}
               <br />
               raw worker preserved: YES
               <br />
@@ -427,7 +429,8 @@ export default function TinkerersRunPage() {
               {hashes.worker ? (
                 <>
                   <br />
-                  worker sha256: {hashes.worker.slice(0, 16)}…
+                  worker sha256: <span style={hashStyle}>{hashes.worker}</span>
+                  {hashes.qc ? <><br />QC sha256: <span style={hashStyle}>{hashes.qc}</span></> : null}
                 </>
               ) : null}
             </div>
@@ -446,6 +449,9 @@ export default function TinkerersRunPage() {
     </main>
   );
 }
+
+const signalStyle: CSSProperties = { margin: "14px 0", padding: 12, border: "2px solid #d7c27a", borderRadius: 12, fontWeight: 900, letterSpacing: "0.08em" };
+const hashStyle: CSSProperties = { overflowWrap: "anywhere", wordBreak: "break-word", fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" };
 
 const legend: CSSProperties = {
   margin: "18px 0 8px",

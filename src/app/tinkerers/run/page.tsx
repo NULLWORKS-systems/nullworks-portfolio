@@ -35,6 +35,41 @@ async function copyText(value: string) {
   }
 }
 
+function PromptCard({
+  title,
+  body,
+  copied,
+  onCopy,
+}: {
+  title: string;
+  body: string;
+  copied: boolean;
+  onCopy: () => void;
+}) {
+  return (
+    <div style={promptCard}>
+      <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center" }}>
+        <div style={kicker}>FROZEN PROMPT · INSPECT BEFORE COPY</div>
+        <button style={smallBtn} onClick={onCopy}>
+          {copied ? "COPIED" : "COPY"}
+        </button>
+      </div>
+      <div style={{ fontWeight: 800, margin: "8px 0 10px" }}>{title}</div>
+      <pre style={promptPre}>{body}</pre>
+    </div>
+  );
+}
+
+function SourceTag({ kind }: { kind: "claim" | "observed" | "human" }) {
+  const label =
+    kind === "claim" ? "AI CLAIM" : kind === "observed" ? "OBSERVED" : "HUMAN CALL";
+  return (
+    <span style={{ letterSpacing: "0.12em", fontSize: 11, fontWeight: 800, color: "#9aa8a4" }}>
+      {label}
+    </span>
+  );
+}
+
 export default function TinkerersRunPage() {
   const [step, setStep] = useState(0);
   const [session] = useState(newSessionId);
@@ -58,6 +93,8 @@ export default function TinkerersRunPage() {
   const localEvidence = useMemo(() => validateWorkerArtifact(worker), [worker]);
   const evidence = serverEvidence || localEvidence;
   const relation = qcEvidenceRelation(qcClaim, evidence.verdict);
+  const qcModel = sameQc ? modelWorker : modelQc;
+  const qcPrompt = buildQcPrompt(worker);
 
   const markCopied = (label: string) => {
     setCopied(label);
@@ -91,7 +128,7 @@ export default function TinkerersRunPage() {
     const payload = {
       session,
       model_worker: modelWorker,
-      model_qc: sameQc ? modelWorker : modelQc,
+      model_qc: qcModel,
       worker_claim: workerClaim,
       qc_claim: qcClaim,
       worker_output: worker,
@@ -140,7 +177,7 @@ export default function TinkerersRunPage() {
 
   return (
     <main style={{ minHeight: "100vh", background: "#06110f", color: "#eef2ef" }}>
-      <div style={{ maxWidth: 720, margin: "0 auto", padding: "28px 18px 96px", fontFamily: "system-ui, sans-serif" }}>
+      <div style={{ maxWidth: 720, margin: "0 auto", padding: "28px 18px 140px", fontFamily: "system-ui, sans-serif" }}>
         <div style={{ letterSpacing: 3, fontWeight: 900, fontSize: 12 }}>
           NULLWORKS // {EXPERIMENT_ID} // v{CONTRACT_VERSION}
         </div>
@@ -151,6 +188,11 @@ export default function TinkerersRunPage() {
         <p style={{ fontSize: 13, color: "#9aa8a4", lineHeight: 1.55, borderLeft: "3px solid #3d524d", paddingLeft: 12 }}>
           {DISCLOSURE}
         </p>
+        <div style={legend}>
+          <div><b>AI CLAIM</b> = what a model said. Not proof.</div>
+          <div><b>OBSERVED</b> = what NULLWORKS measured against the frozen contract.</div>
+          <div><b>HUMAN CALL</b> = your disposition. Final authority, not infallibility.</div>
+        </div>
 
         {step === 0 && (
           <section>
@@ -172,25 +214,32 @@ export default function TinkerersRunPage() {
         {step === 1 && (
           <section>
             <h2>Level 1 · Worker</h2>
-            <p>Copy this frozen task into {modelWorker}. Paste the complete raw response before anyone evaluates it.</p>
-            <button
-              style={btn(false)}
-              onClick={async () => {
+            <p>
+              Inspect the frozen worker prompt first. Then paste it into {modelWorker}. Then paste the complete raw response back here. Do not evaluate yet.
+            </p>
+            <PromptCard
+              title="Worker prompt"
+              body={WORKER_PROMPT}
+              copied={copied === "worker"}
+              onCopy={async () => {
                 if (await copyText(WORKER_PROMPT)) markCopied("worker");
               }}
-            >
-              {copied === "worker" ? "COPIED" : "COPY WORKER TEST"}
-            </button>
+            />
+            <p style={{ marginTop: 22 }}>Paste the complete raw worker output</p>
             <textarea
               value={worker}
               onChange={(event) => setWorker(event.target.value)}
-              placeholder="Paste the complete raw worker output"
+              placeholder="Paste everything the worker AI returned"
               style={areaStyle}
             />
-            <p>What did the worker claim?</p>
+            <p style={{ marginTop: 18 }}>
+              <SourceTag kind="claim" />
+              <br />
+              What did {modelWorker} claim? This is the model talking about itself. It is not the measurement.
+            </p>
             {(["PASS", "FAIL", "UNCLEAR"] as Claim[]).map((claim) => (
               <button key={claim} style={btn(workerClaim === claim)} onClick={() => setWorkerClaim(claim)}>
-                {claim}
+                AI CLAIMED {claim}
               </button>
             ))}
             <p>
@@ -204,7 +253,9 @@ export default function TinkerersRunPage() {
         {step === 2 && (
           <section>
             <h2>Level 2 · AI QC</h2>
-            <p>Ask an AI to judge the exact frozen worker output. Same model or a different one.</p>
+            <p>
+              Inspect the frozen QC prompt, including the locked worker output. Then paste it into an AI. Then paste the complete raw QC response back here.
+            </p>
             <label style={{ display: "flex", gap: 10, alignItems: "center", margin: "12px 0" }}>
               <input
                 type="checkbox"
@@ -219,26 +270,29 @@ export default function TinkerersRunPage() {
                   {model}
                 </button>
               ))}
-            <p>
-              <button
-                style={btn(false)}
-                onClick={async () => {
-                  if (await copyText(buildQcPrompt(worker))) markCopied("qc");
-                }}
-              >
-                {copied === "qc" ? "COPIED" : "COPY QC TEST"}
-              </button>
-            </p>
+            <PromptCard
+              title={`QC prompt for ${qcModel}`}
+              body={qcPrompt}
+              copied={copied === "qc"}
+              onCopy={async () => {
+                if (await copyText(qcPrompt)) markCopied("qc");
+              }}
+            />
+            <p style={{ marginTop: 22 }}>Paste the complete raw QC output</p>
             <textarea
               value={qc}
               onChange={(event) => setQc(event.target.value)}
-              placeholder="Paste the complete raw QC output"
+              placeholder="Paste everything the checker AI returned"
               style={areaStyle}
             />
-            <p>QC verdict</p>
+            <p style={{ marginTop: 18 }}>
+              <SourceTag kind="claim" />
+              <br />
+              What did {qcModel} conclude? Another AI claim. Still not the measurement.
+            </p>
             {(["PASS", "FAIL", "UNCLEAR"] as Claim[]).map((claim) => (
               <button key={claim} style={btn(qcClaim === claim)} onClick={() => setQcClaim(claim)}>
-                {claim}
+                QC CLAIMED {claim}
               </button>
             ))}
             <p>
@@ -251,28 +305,42 @@ export default function TinkerersRunPage() {
 
         {step === 3 && (
           <section>
-            <h2>Level 3 · Evidence</h2>
+            <h2>Level 3 · Observed evidence</h2>
             <p style={{ color: "#9aa8a4" }}>
-              Deterministic TypeScript validator. Not an LLM. {serverEvidence ? "Server measurement used." : "Local measurement (server unreachable)."}
+              This block is not an AI. NULLWORKS compares the raw worker output to the frozen contract.
+              {serverEvidence ? " Server measurement used." : " Local measurement (server unreachable)."}
             </p>
             {evidence.requirements.map((item) => (
               <div key={item.id} style={rowStyle}>
                 <div>
                   <div>{item.requirement}</div>
                   <div style={{ color: "#8b9894", fontSize: 13 }}>
-                    expected {item.expected} · observed {item.observed}
+                    expected {item.expected}
+                    <br />
+                    observed {item.observed}
                   </div>
                 </div>
-                <b>{item.verdict}</b>
+                <b>{item.verdict === "PASS" ? "OBSERVED PASS" : "OBSERVED FAIL"}</b>
               </div>
             ))}
-            <h3>Worker claim: {workerClaim}</h3>
-            <h3>AI QC verdict: {qcClaim}</h3>
-            <h3>Deterministic evidence: {evidence.verdict}</h3>
+            <div style={board}>
+              <div>
+                <SourceTag kind="claim" />
+                <div style={boardValue}>{modelWorker} claimed {workerClaim}</div>
+              </div>
+              <div>
+                <SourceTag kind="claim" />
+                <div style={boardValue}>{qcModel} claimed {qcClaim}</div>
+              </div>
+              <div>
+                <SourceTag kind="observed" />
+                <div style={boardValue}>NULLWORKS observed {evidence.verdict}</div>
+              </div>
+            </div>
             <p style={{ color: "#c7d0cd" }}>
-              {relation === "AGREE" && "QC agrees with evidence."}
-              {relation === "DISAGREE" && "QC contradicts deterministic evidence."}
-              {relation === "INDETERMINATE" && "Agreement is indeterminate."}
+              {relation === "AGREE" && "The checker AI’s claim matches the observed measurement."}
+              {relation === "DISAGREE" && "The checker AI’s claim contradicts the observed measurement."}
+              {relation === "INDETERMINATE" && "Claim-versus-measurement agreement is indeterminate."}
             </p>
             <button style={btn(true)} onClick={() => setStep(4)}>
               HUMAN AUTHORITY →
@@ -282,18 +350,27 @@ export default function TinkerersRunPage() {
 
         {step === 4 && (
           <section>
-            <h2>Level 4 · Human Authority</h2>
-            <p>
-              Worker: {workerClaim}
-              <br />
-              AI QC: {qcClaim}
-              <br />
-              Evidence: {evidence.verdict}
+            <h2>Level 4 · Human authority</h2>
+            <div style={board}>
+              <div>
+                <SourceTag kind="claim" />
+                <div style={boardValue}>{modelWorker} claimed {workerClaim}</div>
+              </div>
+              <div>
+                <SourceTag kind="claim" />
+                <div style={boardValue}>{qcModel} claimed {qcClaim}</div>
+              </div>
+              <div>
+                <SourceTag kind="observed" />
+                <div style={boardValue}>NULLWORKS observed {evidence.verdict}</div>
+              </div>
+            </div>
+            <p style={{ color: "#9aa8a4" }}>
+              Now you decide. ACCEPT / REJECT / CHALLENGE is your call, not another model score.
             </p>
-            <p style={{ color: "#9aa8a4" }}>Authorization terminates at an identifiable human. That is not the same as infallibility.</p>
             {(["ACCEPT", "REJECT", "CHALLENGE"] as HumanDisposition[]).map((item) => (
               <button key={item} style={btn(human === item)} onClick={() => setHuman(item)}>
-                {item}
+                HUMAN {item}
               </button>
             ))}
             {human === "CHALLENGE" && (
@@ -326,17 +403,17 @@ export default function TinkerersRunPage() {
               session: {receiptId}
               <br />
               <br />
-              worker: {modelWorker}
+              worker model: {modelWorker}
               <br />
-              worker claim: {workerClaim}
-              <br />
-              <br />
-              QC: {sameQc ? modelWorker : modelQc}
-              <br />
-              QC verdict: {qcClaim}
+              AI worker claim: {workerClaim}
               <br />
               <br />
-              evidence: {evidence.verdict}
+              QC model: {qcModel}
+              <br />
+              AI QC claim: {qcClaim}
+              <br />
+              <br />
+              observed evidence: {evidence.verdict}
               <br />
               <br />
               human disposition: {human}
@@ -370,6 +447,51 @@ export default function TinkerersRunPage() {
   );
 }
 
+const legend: CSSProperties = {
+  margin: "18px 0 8px",
+  padding: 14,
+  border: "1px solid #31403d",
+  borderRadius: 14,
+  color: "#c7d0cd",
+  lineHeight: 1.55,
+  fontSize: 14,
+};
+
+const promptCard: CSSProperties = {
+  marginTop: 14,
+  padding: 14,
+  border: "1px solid #52625e",
+  borderRadius: 16,
+  background: "#0c1816",
+};
+
+const promptPre: CSSProperties = {
+  margin: 0,
+  whiteSpace: "pre-wrap",
+  wordBreak: "break-word",
+  fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+  fontSize: 14,
+  lineHeight: 1.55,
+  color: "#eef2ef",
+};
+
+const smallBtn: CSSProperties = {
+  padding: "8px 12px",
+  borderRadius: 999,
+  border: "1px solid #71807c",
+  background: "#eef2ef",
+  color: "#071311",
+  fontWeight: 800,
+  fontSize: 13,
+};
+
+const kicker: CSSProperties = {
+  letterSpacing: "0.12em",
+  fontSize: 11,
+  fontWeight: 800,
+  color: "#8b9894",
+};
+
 const areaStyle: CSSProperties = {
   width: "100%",
   minHeight: 180,
@@ -389,4 +511,16 @@ const rowStyle: CSSProperties = {
   gap: 16,
   padding: "12px 0",
   borderBottom: "1px solid #31403d",
+};
+
+const board: CSSProperties = {
+  display: "grid",
+  gap: 12,
+  margin: "18px 0",
+};
+
+const boardValue: CSSProperties = {
+  fontSize: 20,
+  fontWeight: 800,
+  marginTop: 4,
 };

@@ -13,7 +13,9 @@ export default function PublicQuickNav() {
     pathname?.startsWith('/review') ||
     pathname?.startsWith('/private') ||
     pathname?.startsWith('/workroom') ||
-    pathname?.startsWith('/anvil')
+    pathname?.startsWith('/anvil') ||
+    pathname === '/tinkerers/run' ||
+    pathname === '/tinkerers/live'
   ) return null;
 
   return (

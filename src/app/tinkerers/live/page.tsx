@@ -3,7 +3,21 @@
 import { useEffect, useState, type CSSProperties } from "react";
 import type { LiveSnapshot } from "@/lib/tinkerers-contract";
 
-const EMPTY: LiveSnapshot = {
+type Tone = "match" | "miss" | "open" | "measure-pass" | "measure-fail" | "measure-open";
+
+type LivePath = {
+  id?: string;
+  worker?: string;
+  qc?: string;
+  worker_claim?: string;
+  qc_claim?: string;
+  evidence?: string;
+  human?: string;
+};
+
+type LiveView = LiveSnapshot & { paths?: LivePath[] };
+
+const EMPTY: LiveView = {
   experiment_id: "NW-PHX-001",
   contract_version: "1.0.0",
   sessions: 0,
@@ -25,7 +39,35 @@ const EMPTY: LiveSnapshot = {
   human_challenge: 0,
   worker_models: {},
   label: "SELF-REPORTED",
+  paths: [],
 };
+
+const TONE: Record<Tone, CSSProperties> = {
+  match: { background: "#12351f", border: "1px solid #3fbf73", color: "#d7ffe6" },
+  miss: { background: "#3a1518", border: "1px solid #e06b73", color: "#ffd6d8" },
+  open: { background: "#2a2414", border: "1px solid #d7c27a", color: "#f3e6b3" },
+  "measure-pass": { background: "#12351f", border: "1px solid #3fbf73", color: "#d7ffe6" },
+  "measure-fail": { background: "#3a1518", border: "1px solid #e06b73", color: "#ffd6d8" },
+  "measure-open": { background: "#2a2414", border: "1px solid #d7c27a", color: "#f3e6b3" },
+};
+
+function claimTone(claim: string | undefined, evidence: string | undefined): Tone {
+  if (!claim || !evidence || claim === "UNCLEAR" || evidence === "INDETERMINATE") return "open";
+  return claim === evidence ? "match" : "miss";
+}
+
+function evidenceTone(evidence: string | undefined): Tone {
+  if (evidence === "PASS") return "measure-pass";
+  if (evidence === "FAIL") return "measure-fail";
+  return "measure-open";
+}
+
+function humanTone(human: string | undefined, evidence: string | undefined): Tone {
+  if (!human || human === "CHALLENGE" || !evidence || evidence === "INDETERMINATE") return "open";
+  if (human === "ACCEPT") return "match";
+  if (human === "REJECT" && evidence === "FAIL") return "match";
+  return "miss";
+}
 
 function Cell({ label, value }: { label: string; value: number | string }) {
   return (
@@ -36,8 +78,25 @@ function Cell({ label, value }: { label: string; value: number | string }) {
   );
 }
 
+function Step({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string;
+  tone: Tone;
+}) {
+  return (
+    <div style={{ ...step, ...TONE[tone] }}>
+      <div style={stepLabel}>{label}</div>
+      <div style={stepValue}>{value}</div>
+    </div>
+  );
+}
+
 export default function TinkerersLivePage() {
-  const [snapshot, setSnapshot] = useState<LiveSnapshot>(EMPTY);
+  const [snapshot, setSnapshot] = useState<LiveView>(EMPTY);
   const [status, setStatus] = useState("connecting");
   const [reveal, setReveal] = useState(false);
 
@@ -67,6 +126,7 @@ export default function TinkerersLivePage() {
   }, []);
 
   const models = Object.entries(snapshot.worker_models || {});
+  const paths = snapshot.paths || [];
 
   return (
     <main style={shell}>
@@ -76,6 +136,31 @@ export default function TinkerersLivePage() {
         </div>
         <h1 style={title}>The room is the experiment.</h1>
         <p style={muted}>Anonymous aggregates only. No names. No emails. No raw prompts. Status: {status}.</p>
+
+        <h2 style={level}>RUN PATHS</h2>
+        <p style={muted}>
+          Green = that layer matched observed evidence. Red = it disagreed. Gold = unclear. Evidence itself is the measurement, not another AI claim. This is not a model ranking.
+        </p>
+        <div style={pathList}>
+          {paths.length === 0 && <p style={muted}>No completed sessions yet.</p>}
+          {paths.map((path, index) => (
+            <div key={`${path.id || index}`} style={pathRow}>
+              <div style={pathMeta}>
+                <b>{path.worker || "Unspecified"}</b>
+                <span style={muted}> worker → {path.qc || "Unspecified"} QC</span>
+              </div>
+              <div style={pathSteps}>
+                <Step label="WORKER" value={path.worker_claim || "—"} tone={claimTone(path.worker_claim, path.evidence)} />
+                <div style={arrow}>→</div>
+                <Step label="QC" value={path.qc_claim || "—"} tone={claimTone(path.qc_claim, path.evidence)} />
+                <div style={arrow}>→</div>
+                <Step label="EVIDENCE" value={path.evidence || "—"} tone={evidenceTone(path.evidence)} />
+                <div style={arrow}>→</div>
+                <Step label="HUMAN" value={path.human || "—"} tone={humanTone(path.human, path.evidence)} />
+              </div>
+            </div>
+          ))}
+        </div>
 
         <h2 style={level}>TOTAL / COMPLETED EXPERIMENTS</h2>
         <section style={grid}>
@@ -223,6 +308,51 @@ const cellValue: CSSProperties = {
   fontWeight: 900,
   lineHeight: 1.05,
   marginTop: 8,
+};
+
+const pathList: CSSProperties = { display: "grid", gap: 12 };
+
+const pathRow: CSSProperties = {
+  border: "1px solid #31403d",
+  borderRadius: 18,
+  padding: 14,
+  background: "#0c1816",
+};
+
+const pathMeta: CSSProperties = { marginBottom: 10, fontSize: 15 };
+
+const pathSteps: CSSProperties = {
+  display: "flex",
+  flexWrap: "wrap",
+  alignItems: "stretch",
+  gap: 8,
+};
+
+const step: CSSProperties = {
+  flex: "1 1 120px",
+  minWidth: 110,
+  borderRadius: 14,
+  padding: "10px 12px",
+};
+
+const stepLabel: CSSProperties = {
+  letterSpacing: "0.12em",
+  fontSize: 11,
+  fontWeight: 800,
+  opacity: 0.8,
+};
+
+const stepValue: CSSProperties = {
+  fontSize: 20,
+  fontWeight: 900,
+  marginTop: 4,
+};
+
+const arrow: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  fontSize: 20,
+  color: "#8b9894",
 };
 
 const ghostBtn: CSSProperties = {

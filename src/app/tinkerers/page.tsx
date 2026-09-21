@@ -1,12 +1,5 @@
-import type { Metadata } from "next";
 import styles from "../corporate.module.css";
 import TinkerersQr from "./TinkerersQr";
-
-export const metadata: Metadata = {
-  title: "AI Tinkerers Live Demo | NULLWORKS",
-  description:
-    "A five-minute live experiment: an AI worker can be wrong, the AI quality checker can be wrong, and human authority remains final.",
-};
 
 const RUN_URL = "https://nullworks.systems/tinkerers/run";
 

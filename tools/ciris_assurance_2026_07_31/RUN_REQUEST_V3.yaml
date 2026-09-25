@@ -1,0 +1,10 @@
+record_type: NULLWORKS_CIRIS_ASSURANCE_RUN_REQUEST
+record_id: NW-CIRIS-RUNTIME-RUN-003
+requested_at_local: "2026-07-31T05:18:00-07:00"
+requested_by: Mason Perry
+campaign: V3_PROBE_CORRECTION
+change_from_v2: corrected WACertificate identifier format for the direct imported-code jurisdiction probe
+pins:
+  CIRISAgent: 7f2369bed22c626404a1dcf8e09bfeb81a573d82
+  CIRISPersist: e8cdb535b60a549948f2b0ceb43deb6921009260
+truth_boundary: direct core-method execution with mocked dependencies; not production observation

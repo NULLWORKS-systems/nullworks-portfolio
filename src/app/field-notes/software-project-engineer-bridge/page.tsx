@@ -207,6 +207,27 @@ export default function SoftwareProjectEngineerBridgePage() {
         That is the same reasoning I bring to warehouse software implementation. Do not immediately add more capability. First make the actual flow visible. Identify the constraint. Clarify ownership. Preserve evidence. Improve the handoff. Then measure the result.
       </P>
 
+      <H2>Then the application became the assessment</H2>
+
+      <P>
+        While this page and a separate Voice Foundry deployment were being completed, two independent AI workrooms encountered related failures inside the same GitHub-to-Vercel production path. Both had source work that appeared complete. Both lacked a defensible customer-visible destination.
+      </P>
+
+      <P>
+        I recognized the shared pattern, connected the workrooms through one durable coordination issue, divided responsibility, piped Vercel failure notices directly from Gmail, rejected guessed hostnames, moved the repair to direct routes on main, and kept the finish line open until both pages rendered from the real production domain on my phone.
+      </P>
+
+      <div className="my-10 overflow-hidden rounded-[26px] border border-[#b7c73c]/45 bg-[#081014] p-6 text-[#f7f3e8] shadow-[0_24px_70px_rgba(8,16,20,.24)] sm:p-8">
+        <div className="text-[10px] font-black uppercase tracking-[0.2em] text-[#d7ff3f]">Live application field receipt</div>
+        <h3 className="mt-4 font-serif text-3xl font-bold leading-tight tracking-[-0.04em] sm:text-4xl">The best evidence for the application did not exist until the application broke.</h3>
+        <p className="mt-4 text-sm leading-relaxed text-[#c2c8c2] sm:text-base">
+          The incident reproduced the role&apos;s real bridge work: customer-visible failure, cross-system diagnosis, software coordination, acceptance testing, evidence preservation, and final human verification.
+        </p>
+        <a href="/field-notes/the-application-became-the-assessment" className="mt-6 inline-flex items-center rounded-full bg-[#d7ff3f] px-5 py-3 text-xs font-black uppercase tracking-[0.08em] text-[#0b0d08] no-underline">
+          Read the complete deployment case study →
+        </a>
+      </div>
+
       <H2>What I would bring to the role</H2>
 
       <BulletGrid

@@ -24,3 +24,13 @@ export async function dbPatch<T>(path: string, body: unknown): Promise<T> {
   if (!r.ok) throw new Error(await r.text());
   return r.json();
 }
+
+export async function dbUpsert<T>(table: string, body: unknown, onConflict: string): Promise<T> {
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?on_conflict=${encodeURIComponent(onConflict)}`, {
+    method: 'POST',
+    headers: { ...headers, Prefer: 'resolution=merge-duplicates,return=representation' },
+    body: JSON.stringify(body),
+  });
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}

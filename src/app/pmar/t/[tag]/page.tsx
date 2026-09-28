@@ -13,6 +13,8 @@ type Row = {
   paired_at: string;
   updated_at: string;
   last_scanned_at: string;
+  last_work_on: string | null;
+  last_work_note: string | null;
 };
 
 type Schedule = {
@@ -69,6 +71,13 @@ function dueState(nextDue: string | null) {
   return nextDue < todayISO() ? 'overdue' : 'ok';
 }
 
+function shortDate(iso: string | null | undefined) {
+  if (!iso) return '';
+  const d = new Date(`${iso.slice(0, 10)}T12:00:00`);
+  if (Number.isNaN(d.getTime())) return '';
+  return `${d.getMonth() + 1}/${d.getDate()}`;
+}
+
 export default function PMARTagPage() {
   const params = useParams<{ tag: string }>();
   const tag = useMemo(
@@ -78,6 +87,7 @@ export default function PMARTagPage() {
   const [binding, setBinding] = useState<Row | null>(null);
   const [schedule, setSchedule] = useState<Schedule | null>(null);
   const [lastNote, setLastNote] = useState('');
+  const [workLog, setWorkLog] = useState<EventRow[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -86,13 +96,17 @@ export default function PMARTagPage() {
   const [hours, setHours] = useState('');
   const [statusNote, setStatusNote] = useState('');
   const [confirmStatus, setConfirmStatus] = useState(false);
+  const [workNote, setWorkNote] = useState('');
 
   async function loadRecord(currentTag: string) {
-    const [rows, schedules, events] = await Promise.all([
+    const [rows, schedules, events, work] = await Promise.all([
       dbGet<Row[]>(`pmars_tags?tag_id=eq.${encodeURIComponent(currentTag)}&select=*`),
       dbGet<Schedule[]>(`pmars_pm_schedules?tag_id=eq.${encodeURIComponent(currentTag)}&select=*`),
       dbGet<EventRow[]>(
         `pmars_events?tag_id=eq.${encodeURIComponent(currentTag)}&event_type=eq.STATUS_NOTE&select=event_type,value_text,created_at&order=created_at.desc&limit=1`,
+      ),
+      dbGet<EventRow[]>(
+        `pmars_events?tag_id=eq.${encodeURIComponent(currentTag)}&event_type=eq.WORK_NOTE&select=event_type,value_text,created_at&order=created_at.desc&limit=5`,
       ),
     ]);
     if (rows[0]) {
@@ -101,6 +115,7 @@ export default function PMARTagPage() {
     }
     setSchedule(schedules[0] || null);
     setLastNote(events[0]?.value_text || '');
+    setWorkLog(work);
     return rows[0] || null;
   }
 
@@ -237,6 +252,41 @@ export default function PMARTagPage() {
     }
   }
 
+  async function saveWorkNote() {
+    if (!binding || busy) return;
+    const note = workNote.trim();
+    if (note.length < 3) {
+      setError('Write what you did before stamping today.');
+      return;
+    }
+    setBusy(true);
+    setError('');
+    const stamped = todayISO();
+    try {
+      const rows = await dbPatch<Row[]>(`pmars_tags?tag_id=eq.${encodeURIComponent(tag)}`, {
+        last_work_on: stamped,
+        last_work_note: note,
+        updated_at: new Date().toISOString(),
+        last_scanned_at: new Date().toISOString(),
+      });
+      setBinding(rows[0]);
+      await dbPost(
+        'pmars_events',
+        { tag_id: tag, event_type: 'WORK_NOTE', value_text: `${stamped} — ${note}` },
+        'return=minimal',
+      );
+      setWorkLog((prev) => [
+        { event_type: 'WORK_NOTE', value_text: `${stamped} — ${note}`, created_at: new Date().toISOString() },
+        ...prev,
+      ].slice(0, 5));
+      setWorkNote('');
+    } catch {
+      setError('Could not save the work note.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function saveCadence(cadence: Schedule['cadence']) {
     if (!binding || busy) return;
     setBusy(true);
@@ -278,6 +328,12 @@ export default function PMARTagPage() {
       };
       const rows = await dbUpsert<Schedule[]>('pmars_pm_schedules', payload, 'tag_id');
       setSchedule(rows[0]);
+      const stampedRows = await dbPatch<Row[]>(`pmars_tags?tag_id=eq.${encodeURIComponent(tag)}`, {
+        last_work_on: todayISO(),
+        last_work_note: binding.last_work_note || `${cadence} PM completed`,
+        updated_at: new Date().toISOString(),
+      });
+      setBinding(stampedRows[0]);
       await dbPost(
         'pmars_events',
         { tag_id: tag, event_type: 'PM_COMPLETED', value_text: `${cadence} · next ${payload.next_due_on}` },
@@ -298,20 +354,15 @@ export default function PMARTagPage() {
 
   return (
     <main style={{ position: 'relative', minHeight: '100vh', padding: '32px 20px', color: '#fff' }}>
-      <div
-        aria-hidden="true"
-        style={{ position: 'fixed', inset: 0, pointerEvents: 'none', background: 'rgba(0,0,0,0.28)', zIndex: 0 }}
-      />
+      <div aria-hidden="true" style={{ position: 'fixed', inset: 0, pointerEvents: 'none', background: 'rgba(0,0,0,0.28)', zIndex: 0 }} />
       <div style={{ position: 'relative', zIndex: 3, maxWidth: 440, margin: '0 auto', display: 'grid', gap: 16 }}>
         <header style={{ ...bubble, padding: 16 }}>
           <div style={{ fontSize: 12, fontWeight: 900, letterSpacing: '0.28em', color: '#4ade80' }}>PMARS LIVE</div>
           <h1 style={{ margin: '8px 0 0', fontSize: 36, fontWeight: 900 }}>{tag || 'UNKNOWN TAG'}</h1>
         </header>
-
         {error && (
           <div style={{ ...bubble, padding: 16, borderColor: 'rgba(248,113,113,0.45)', color: '#fecaca' }}>{error}</div>
         )}
-
         {!binding ? (
           <section style={{ ...bubble, padding: 24 }}>
             <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.2em', color: '#4ade80' }}>NEW TRIANGLE</div>
@@ -340,11 +391,16 @@ export default function PMARTagPage() {
                 <span style={{ color: 'rgba(255,255,255,0.5)' }}>PMARS point</span>
                 <strong>{tag}</strong>
               </div>
+              {binding.last_work_on && (
+                <div style={{ marginTop: 12, fontSize: 14, color: '#bbf7d0' }}>
+                  Last work {shortDate(binding.last_work_on)}
+                  {binding.last_work_note ? ` · ${binding.last_work_note}` : ''}
+                </div>
+              )}
               {lastNote && (
                 <p style={{ marginTop: 16, color: 'rgba(254,202,202,0.9)', fontSize: 14, lineHeight: 1.4 }}>{lastNote}</p>
               )}
             </section>
-
             <section style={{ ...bubble, padding: 24 }}>
               <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.2em', color: '#4ade80' }}>HOURS</div>
               <label style={{ display: 'block', marginTop: 12, color: 'rgba(255,255,255,0.55)', fontWeight: 700 }}>Displayed hours</label>
@@ -353,30 +409,36 @@ export default function PMARTagPage() {
                 {busy ? 'SAVING...' : 'UPDATE HOURS'}
               </button>
             </section>
-
+            <section style={{ ...bubble, padding: 24 }}>
+              <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.2em', color: '#4ade80' }}>WORK NOTES</div>
+              <p style={{ marginTop: 8, color: 'rgba(255,255,255,0.62)' }}>
+                Log what you did. Saves the note and stamps today on the overview.
+              </p>
+              <textarea value={workNote} onChange={(e) => setWorkNote(e.target.value)} placeholder="New fork rollers installed" rows={3} style={{ ...field, fontSize: 16, fontWeight: 600, resize: 'vertical' }} />
+              <button disabled={busy} onClick={saveWorkNote} style={{ width: '100%', marginTop: 16, padding: 18, borderRadius: 16, border: 0, background: '#22c55e', color: '#052e16', fontWeight: 900, fontSize: 16 }}>
+                {busy ? 'SAVING...' : `LOG WORK · ${shortDate(todayISO())}`}
+              </button>
+              {workLog.length > 0 && (
+                <div style={{ marginTop: 16, display: 'grid', gap: 8 }}>
+                  {workLog.map((entry, i) => (
+                    <div key={`${entry.created_at}-${i}`} style={{ color: 'rgba(255,255,255,0.62)', fontSize: 13, lineHeight: 1.4 }}>
+                      {entry.value_text}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
             <section style={{ ...bubble, padding: 24 }}>
               <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.2em', color: '#4ade80' }}>SERVICE STATE</div>
-              <p style={{ marginTop: 8, color: 'rgba(255,255,255,0.62)' }}>
-                Changing state requires a note. Do not tap a dead jack back into service with no reason.
-              </p>
+              <p style={{ marginTop: 8, color: 'rgba(255,255,255,0.62)' }}>Changing state requires a note. Do not tap a dead jack back into service with no reason.</p>
               {!confirmStatus ? (
-                <button
-                  disabled={busy}
-                  onClick={() => { setConfirmStatus(true); setError(''); }}
-                  style={{ width: '100%', marginTop: 16, padding: 18, borderRadius: 16, border: 0, background: inService ? '#dc2626' : '#22c55e', color: inService ? '#fff' : '#052e16', fontWeight: 900, fontSize: 16 }}
-                >
+                <button disabled={busy} onClick={() => { setConfirmStatus(true); setError(''); }} style={{ width: '100%', marginTop: 16, padding: 18, borderRadius: 16, border: 0, background: inService ? '#dc2626' : '#22c55e', color: inService ? '#fff' : '#052e16', fontWeight: 900, fontSize: 16 }}>
                   MARK {nextStatus}
                 </button>
               ) : (
                 <>
                   <label style={{ display: 'block', marginTop: 16, color: 'rgba(255,255,255,0.55)', fontWeight: 700 }}>What did you see?</label>
-                  <textarea
-                    value={statusNote}
-                    onChange={(e) => setStatusNote(e.target.value)}
-                    placeholder={inService ? 'No lift under load. Red tagged.' : 'Lift verified under load. Returned to service.'}
-                    rows={4}
-                    style={{ ...field, fontSize: 16, fontWeight: 600, resize: 'vertical' }}
-                  />
+                  <textarea value={statusNote} onChange={(e) => setStatusNote(e.target.value)} placeholder={inService ? 'No lift under load. Red tagged.' : 'Lift verified under load. Returned to service.'} rows={4} style={{ ...field, fontSize: 16, fontWeight: 600, resize: 'vertical' }} />
                   <button disabled={busy} onClick={applyStatus} style={{ width: '100%', marginTop: 16, padding: 18, borderRadius: 16, border: 0, background: inService ? '#dc2626' : '#22c55e', color: inService ? '#fff' : '#052e16', fontWeight: 900, fontSize: 16 }}>
                     CONFIRM {nextStatus}
                   </button>
@@ -386,28 +448,13 @@ export default function PMARTagPage() {
                 </>
               )}
             </section>
-
             <section style={{ ...bubble, padding: 24 }}>
               <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.2em', color: '#4ade80' }}>PM CADENCE</div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 8, marginTop: 16 }}>
                 {(['NONE', 'MONTHLY', 'QUARTERLY'] as const).map((cadence) => {
                   const active = (schedule?.cadence || 'NONE') === cadence;
                   return (
-                    <button
-                      key={cadence}
-                      disabled={busy}
-                      onClick={() => saveCadence(cadence)}
-                      style={{
-                        padding: 12,
-                        borderRadius: 14,
-                        border: active ? '0' : '1px solid rgba(255,255,255,0.16)',
-                        background: active ? '#86efac' : 'transparent',
-                        color: active ? '#052e16' : '#fff',
-                        fontWeight: 900,
-                        fontSize: 11,
-                        letterSpacing: '0.04em',
-                      }}
-                    >
+                    <button key={cadence} disabled={busy} onClick={() => saveCadence(cadence)} style={{ padding: 12, borderRadius: 14, border: active ? '0' : '1px solid rgba(255,255,255,0.16)', background: active ? '#86efac' : 'transparent', color: active ? '#052e16' : '#fff', fontWeight: 900, fontSize: 11, letterSpacing: '0.04em' }}>
                       {cadence}
                     </button>
                   );
@@ -419,27 +466,17 @@ export default function PMARTagPage() {
                   : 'No recurring PM set'}
               </div>
               {schedule?.last_completed_on && (
-                <div style={{ marginTop: 6, color: 'rgba(255,255,255,0.5)', fontSize: 13 }}>
-                  Last completed {schedule.last_completed_on}
-                </div>
+                <div style={{ marginTop: 6, color: 'rgba(255,255,255,0.5)', fontSize: 13 }}>Last completed {schedule.last_completed_on}</div>
               )}
               <button disabled={busy} onClick={completePm} style={{ width: '100%', marginTop: 16, padding: 18, borderRadius: 16, border: 0, background: '#22c55e', color: '#052e16', fontWeight: 900, fontSize: 16 }}>
                 PM DONE TODAY
               </button>
             </section>
-
-            <p style={{ ...bubble, padding: 16, color: '#bbf7d0', fontWeight: 700 }}>
-              LIVE SHARED RECORD · hours, status notes, and PM dates persist across devices.
-            </p>
+            <p style={{ ...bubble, padding: 16, color: '#bbf7d0', fontWeight: 700 }}>LIVE SHARED RECORD · hours, work notes, and PM dates persist across devices.</p>
           </>
         )}
-
-        <a href="/pmar/overview" style={{ ...bubble, display: 'block', padding: 16, textAlign: 'center', color: '#86efac', fontWeight: 900, textDecoration: 'none' }}>
-          OPEN MAINTENANCE OVERVIEW
-        </a>
-        <p style={{ ...bubble, padding: '12px 16px', textAlign: 'center', letterSpacing: '0.16em', fontSize: 12, fontWeight: 800, color: 'rgba(255,255,255,0.55)' }}>
-          FIND BLUE. SCAN BLUE.
-        </p>
+        <a href="/pmar/overview" style={{ ...bubble, display: 'block', padding: 16, textAlign: 'center', color: '#86efac', fontWeight: 900, textDecoration: 'none' }}>OPEN MAINTENANCE OVERVIEW</a>
+        <p style={{ ...bubble, padding: '12px 16px', textAlign: 'center', letterSpacing: '0.16em', fontSize: 12, fontWeight: 800, color: 'rgba(255,255,255,0.55)' }}>FIND BLUE. SCAN BLUE.</p>
       </div>
     </main>
   );

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { dbGet } from '../../lib/fieldBackend';
 
@@ -12,6 +12,13 @@ type Row = {
   status: string;
   last_scanned_at: string;
   updated_at: string;
+  last_work_on: string | null;
+  last_work_note: string | null;
+};
+
+type Schedule = {
+  tag_id: string;
+  last_completed_on: string | null;
 };
 
 const bubble: React.CSSProperties = {
@@ -23,15 +30,52 @@ const bubble: React.CSSProperties = {
   WebkitBackdropFilter: 'blur(14px)',
 };
 
+function aliasNumber(alias: string) {
+  const match = alias.match(/(\d+)/);
+  return match ? Number(match[1]) : Number.POSITIVE_INFINITY;
+}
+
+function shortDate(iso: string | null | undefined) {
+  if (!iso) return null;
+  const d = new Date(`${iso.slice(0, 10)}T12:00:00`);
+  if (Number.isNaN(d.getTime())) return null;
+  return `${d.getMonth() + 1}/${d.getDate()}`;
+}
+
+const pill: React.CSSProperties = {
+  borderRadius: 999,
+  padding: '4px 10px',
+  fontSize: 11,
+  fontWeight: 900,
+  letterSpacing: '0.02em',
+  whiteSpace: 'nowrap',
+};
+
 export default function Overview() {
   const [rows, setRows] = useState<Row[]>([]);
+  const [schedules, setSchedules] = useState<Record<string, Schedule>>({});
   const [error, setError] = useState('');
 
   useEffect(() => {
-    dbGet<Row[]>('pmars_tags?select=*&order=updated_at.desc')
-      .then(setRows)
+    Promise.all([
+      dbGet<Row[]>('pmars_tags?select=*'),
+      dbGet<Schedule[]>('pmars_pm_schedules?select=tag_id,last_completed_on'),
+    ])
+      .then(([tags, pm]) => {
+        setRows(tags);
+        setSchedules(Object.fromEntries(pm.map((s) => [s.tag_id, s])));
+      })
       .catch(() => setError('Could not load shared fleet data.'));
   }, []);
+
+  const sorted = useMemo(
+    () =>
+      [...rows].sort((a, b) => {
+        const diff = aliasNumber(a.alias) - aliasNumber(b.alias);
+        return diff !== 0 ? diff : a.alias.localeCompare(b.alias);
+      }),
+    [rows],
+  );
 
   const out = rows.filter((r) => r.status === 'OUT OF SERVICE').length;
 
@@ -59,23 +103,36 @@ export default function Overview() {
         </div>
         {error && <p style={{ ...bubble, padding: 16, color: '#fecaca' }}>{error}</p>}
         <div style={{ display: 'grid', gap: 12 }}>
-          {rows.map((r) => (
-            <Link key={r.tag_id} href={`/pmar/t/${r.tag_id}`} style={{ ...bubble, padding: 16, display: 'block', color: '#fff', textDecoration: 'none' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
-                <div>
-                  <div style={{ fontSize: 24, fontWeight: 900 }}>{r.alias}</div>
-                  <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)' }}>{r.kind} · {r.tag_id}</div>
+          {sorted.map((r) => {
+            const lastWork = r.last_work_on || schedules[r.tag_id]?.last_completed_on || null;
+            const dateLabel = shortDate(lastWork);
+            return (
+              <Link key={r.tag_id} href={`/pmar/t/${r.tag_id}`} style={{ ...bubble, padding: 16, display: 'block', color: '#fff', textDecoration: 'none' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start' }}>
+                  <div>
+                    <div style={{ fontSize: 24, fontWeight: 900 }}>{r.alias}</div>
+                    <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)' }}>{r.kind} · {r.tag_id}</div>
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'flex-end', gap: 6 }}>
+                    <span style={{ ...pill, background: r.status === 'IN SERVICE' ? '#22c55e' : '#dc2626', color: r.status === 'IN SERVICE' ? '#052e16' : '#fff' }}>
+                      {r.status}
+                    </span>
+                    {r.displayed_hours !== null && (
+                      <span style={{ ...pill, background: 'rgba(134,239,172,0.16)', color: '#bbf7d0', border: '1px solid rgba(134,239,172,0.28)' }}>
+                        {r.displayed_hours} HRS
+                      </span>
+                    )}
+                    <span style={{ ...pill, background: dateLabel ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.04)', color: dateLabel ? '#e5e7eb' : 'rgba(255,255,255,0.4)', border: '1px solid rgba(255,255,255,0.12)' }}>
+                      {dateLabel ? dateLabel : 'NO PM'}
+                    </span>
+                  </div>
                 </div>
-                <span style={{ alignSelf: 'flex-start', borderRadius: 999, padding: '4px 12px', fontSize: 12, fontWeight: 900, background: r.status === 'IN SERVICE' ? '#22c55e' : '#dc2626', color: r.status === 'IN SERVICE' ? '#052e16' : '#fff' }}>
-                  {r.status}
-                </span>
-              </div>
-              <div style={{ marginTop: 12, display: 'flex', gap: 16, fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>
-                {r.displayed_hours !== null && <span>{r.displayed_hours} HOURS</span>}
-                <span>LAST SCAN {new Date(r.last_scanned_at).toLocaleString()}</span>
-              </div>
-            </Link>
-          ))}
+                {r.last_work_note && (
+                  <div style={{ marginTop: 10, fontSize: 13, color: 'rgba(255,255,255,0.62)' }}>{r.last_work_note}</div>
+                )}
+              </Link>
+            );
+          })}
           {!rows.length && !error && (
             <p style={{ ...bubble, padding: 32, textAlign: 'center', color: 'rgba(255,255,255,0.5)' }}>
               No paired markers yet. The first field scan creates the fleet.

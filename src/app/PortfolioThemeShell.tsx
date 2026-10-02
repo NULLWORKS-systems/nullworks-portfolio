@@ -8,6 +8,7 @@ const preservedVisualRoutes = [
   "/field-notes",
   "/ciris-proof",
   "/ciris-review",
+  "/tinkerers",
 ];
 
 const nativeOscilloscopeRoutes = [

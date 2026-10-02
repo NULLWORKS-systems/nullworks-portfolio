@@ -516,6 +516,7 @@ export default function TinkerersRunPage() {
               THE HUMAN CAN BE WRONG.
             </h2>
             <b>KEEP THE RECEIPTS.</b>
+            <a href="/tinkerers" style={restartLink}>BACK TO THE QR</a>
           </section>
         )}
       </div>
@@ -632,6 +633,14 @@ const primaryBtn: CSSProperties = {
   color: "#071311",
   fontWeight: 800,
   fontSize: 16,
+};
+
+
+const restartLink: CSSProperties = {
+  ...primaryBtn,
+  marginTop: 22,
+  textAlign: "center",
+  textDecoration: "none",
 };
 
 const areaStyle: CSSProperties = {

@@ -15,6 +15,12 @@ import {
   validateWorkerArtifact,
 } from "@/lib/tinkerers-contract";
 
+const HUMAN_CALL_LABEL: Record<HumanDisposition, string> = {
+  ACCEPT: "ARTIFACT MEETS CONTRACT",
+  REJECT: "ARTIFACT FAILS CONTRACT",
+  CHALLENGE: "CHALLENGE THE MEASUREMENT",
+};
+
 const WORKER_CLAIM_LABEL: Record<Claim, string> = {
   PASS: "SAID PASS OR SUCCESS",
   FAIL: "SAID FAIL",
@@ -200,7 +206,7 @@ export default function TinkerersRunPage() {
         <div style={legend}>
           <div><b>AI CLAIM</b> = what a model said. Not proof.</div>
           <div><b>OBSERVED</b> = what NULLWORKS measured against the frozen contract.</div>
-          <div><b>HUMAN CALL</b> = your disposition. Final authority, not infallibility.</div>
+          <div><b>HUMAN CALL</b> = your disposition of the artifact. Not a grade of either AI or the measurement.</div>
         </div>
 
         {step === 0 && (
@@ -396,19 +402,20 @@ export default function TinkerersRunPage() {
               {relation === "DISAGREE" && <div style={callout}>AI QC ≠ EVIDENCE</div>}
               {humanDisagrees && <div style={callout}>HUMAN ≠ EVIDENCE</div>}
             </div>
-            <p style={muted}>Now you decide. ACCEPT / REJECT / CHALLENGE is your call, not another model score.</p>
+            <p style={muted}>Certify the worker artifact against the contract. You are not scoring the worker AI, the checker, or the measurement.</p>
             <div style={chipRow}>
               {(["ACCEPT", "REJECT", "CHALLENGE"] as HumanDisposition[]).map((item) => (
                 <button key={item} style={chip(human === item)} onClick={() => setHuman(item)}>
-                  HUMAN {item}
+                  {HUMAN_CALL_LABEL[item]}
                 </button>
               ))}
             </div>
+            <p style={muted}>A disagree chip means your call conflicts with the measurement. The receipt still stands.</p>
             {human === "CHALLENGE" && (
               <textarea
                 value={challenge}
                 onChange={(event) => setChallenge(event.target.value)}
-                placeholder="Optional challenge explanation"
+                placeholder="Which measurement or contract term are you challenging?"
                 style={areaStyle}
               />
             )}
@@ -458,7 +465,7 @@ export default function TinkerersRunPage() {
 
               <div style={receiptGroup}>
                 <div style={kicker}>HUMAN</div>
-                <div>human disposition: {human}</div>
+                <div>human call: {human ? HUMAN_CALL_LABEL[human] : ""}</div>
               </div>
 
               <div style={calloutRow}>

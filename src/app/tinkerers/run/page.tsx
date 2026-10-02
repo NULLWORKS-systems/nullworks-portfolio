@@ -15,6 +15,12 @@ import {
   validateWorkerArtifact,
 } from "@/lib/tinkerers-contract";
 
+const WORKER_CLAIM_LABEL: Record<Claim, string> = {
+  PASS: "SAID PASS OR SUCCESS",
+  FAIL: "SAID FAIL",
+  UNCLEAR: "DID NOT SAY PASS OR FAIL",
+};
+
 const DISCLOSURE =
   "Anonymous live experiment. Do not paste private, confidential, or sensitive information. Experiment outputs may be retained for demo/research analysis.";
 
@@ -242,15 +248,20 @@ export default function TinkerersRunPage() {
             <p style={{ marginTop: 18 }}>
               <span style={kicker}>AI CLAIM</span>
               <br />
-              What did {modelWorker} claim? This is the model talking about itself. It is not the measurement.
+              Did the worker certify its own result? Read the raw output. Do not score the blocks.
             </p>
             <div style={chipRow}>
-              {(["PASS", "FAIL", "UNCLEAR"] as Claim[]).map((claim) => (
+              {([
+                ["PASS", "SAID PASS OR SUCCESS"],
+                ["FAIL", "SAID FAIL"],
+                ["UNCLEAR", "DID NOT SAY PASS OR FAIL"],
+              ] as [Claim, string][]).map(([claim, label]) => (
                 <button key={claim} style={chip(workerClaim === claim)} onClick={() => setWorkerClaim(claim)}>
-                  AI CLAIMED {claim}
+                  {label}
                 </button>
               ))}
             </div>
+            <p style={muted}>This records what the model said. Whether the blocks are right is the next measurement, not this button.</p>
             <button disabled={!worker.trim() || busy} style={primaryBtn} onClick={lockWorker}>
               LOCK OUTPUT →
             </button>
@@ -353,7 +364,7 @@ export default function TinkerersRunPage() {
               </div>
             ))}
             <div style={board}>
-              <Layer kind="claim" title="AI worker claim" value={`${modelWorker} claimed ${workerClaim}`} />
+              <Layer kind="claim" title="AI worker claim" value={`${modelWorker}: ${WORKER_CLAIM_LABEL[workerClaim]}`} />
               <Layer kind="claim" title="AI QC claim" value={`${qcModel} claimed ${qcClaim}`} />
               <Layer kind="observed" title="Observed evidence" value={`NULLWORKS observed ${evidence.verdict}`} />
             </div>
@@ -376,7 +387,7 @@ export default function TinkerersRunPage() {
           <section>
             <h2 style={level}>LEVEL 4 · HUMAN AUTHORITY</h2>
             <div style={board}>
-              <Layer kind="claim" title="AI worker claim" value={`${modelWorker} claimed ${workerClaim}`} />
+              <Layer kind="claim" title="AI worker claim" value={`${modelWorker}: ${WORKER_CLAIM_LABEL[workerClaim]}`} />
               <Layer kind="claim" title="AI QC claim" value={`${qcModel} claimed ${qcClaim}`} />
               <Layer kind="observed" title="Observed evidence" value={`NULLWORKS observed ${evidence.verdict}`} />
             </div>
@@ -431,7 +442,7 @@ export default function TinkerersRunPage() {
               <div style={receiptGroup}>
                 <div style={kicker}>WORKER</div>
                 <div>worker model: {modelWorker}</div>
-                <div>AI worker claim: {workerClaim}</div>
+                <div>AI worker claim: {WORKER_CLAIM_LABEL[workerClaim]}</div>
               </div>
 
               <div style={receiptGroup}>

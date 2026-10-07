@@ -1,5 +1,6 @@
 import AnvilShell from "../AnvilShell";
 const releases=[
+["9 VOLT","THURSDAY IS MONDAY","Single. Thursday is Monday. Tuesday is Friday. One day off.","/anvil/9-volt/thursday-is-monday"],
 ["9 VOLT","WELCOME TO THE CABLE","Single. Same little hole, different day.","/anvil/9-volt/welcome-to-the-cable"],
 ["9 VOLT","VEX LIKES SEX","1982. Eleven tracks. Peak-era masters.","/anvil/9-volt"],
 ["CROWNROT","ARACHNID","Athlete-soundtrack proof of concept","/anvil/crownrot/arachnid"],

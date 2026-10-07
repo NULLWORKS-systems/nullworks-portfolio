@@ -1,5 +1,7 @@
 import AnvilShell from "../AnvilShell";
 const releases=[
+["9 VOLT","WELCOME TO THE CABLE","Single. Same little hole, different day.","/anvil/9-volt/welcome-to-the-cable"],
+["9 VOLT","VEX LIKES SEX","1982. Eleven tracks. Peak-era masters.","/anvil/9-volt"],
 ["CROWNROT","ARACHNID","Athlete-soundtrack proof of concept","/anvil/crownrot/arachnid"],
 ["聞き書き / KIKIGAKI","消える前に / Before It Disappears","Japanese memory folk","https://distrokid.com/hyperfollow/kikigaki/-kieru-mae-ni-before-it-disappears"],
 ["CROWNROT","KNUCKLES","Modern metalcore","https://distrokid.com/hyperfollow/crownrot1/knuckles"],

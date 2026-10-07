@@ -28,8 +28,8 @@ export const projects: AnvilProject[] = [
     accent: "#f6b73c",
     accent2: "#ff6b35",
     texture: "AMPLIFICATION / WIRE / TAPE",
-    facts: ["1982: VEX LIKES SEX", "1978: HARRY PLOPPINS", "Reverse chronology is part of the composition method", "Physical imperfection beats generic polish"],
-    works: ["VEX LIKES SEX", "HARRY PLOPPINS", "AMPLIFIED", "BURNING WIRE"],
+    facts: ["1982: VEX LIKES SEX", "SINGLE: WELCOME TO THE CABLE", "1978: HARRY PLOPPINS", "Reverse chronology is part of the composition method", "Physical imperfection beats generic polish"],
+    works: ["WELCOME TO THE CABLE", "VEX LIKES SEX", "HARRY PLOPPINS", "AMPLIFIED", "BURNING WIRE"],
   },
   {
     slug: "blood-pagoda",

@@ -17,7 +17,10 @@ export default function TinkerersQr({ url }: { url: string }) {
       }}
     >
       <QRCodeSVG value={url} size={168} bgColor="#eef2ef" fgColor="#06110f" level="M" />
-      <div style={{ fontSize: 12, letterSpacing: "0.14em", fontWeight: 800 }}>SCAN TO RUN</div>
+      <div style={{ fontSize: 12, letterSpacing: "0.14em", fontWeight: 800 }}>SCAN TO START</div>
+      <div style={{ fontSize: 12, fontWeight: 600, textAlign: "center", maxWidth: 180 }}>
+        Opens this page. Pass the phone.
+      </div>
     </div>
   );
 }

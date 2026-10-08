@@ -131,6 +131,7 @@ export default function TinkerersLivePage() {
   return (
     <main style={shell}>
       <div style={frame}>
+        <a href="/tinkerers" style={backBtn}>BACK TO THE QR PAGE</a>
         <div style={kicker}>
           NULLWORKS // ROOM TELEMETRY // {snapshot.experiment_id} // v{snapshot.contract_version}
         </div>
@@ -147,16 +148,16 @@ export default function TinkerersLivePage() {
             <div key={`${path.id || index}`} style={pathRow}>
               <div style={pathMeta}>
                 <b>{path.worker || "Unspecified"}</b>
-                <span style={muted}> worker → {path.qc || "Unspecified"} QC</span>
+                <span style={muted}> worker \u2192 {path.qc || "Unspecified"} QC</span>
               </div>
               <div style={pathSteps}>
-                <Step label="WORKER" value={path.worker_claim || "—"} tone={claimTone(path.worker_claim, path.evidence)} />
-                <div style={arrow}>→</div>
-                <Step label="QC" value={path.qc_claim || "—"} tone={claimTone(path.qc_claim, path.evidence)} />
-                <div style={arrow}>→</div>
-                <Step label="EVIDENCE" value={path.evidence || "—"} tone={evidenceTone(path.evidence)} />
-                <div style={arrow}>→</div>
-                <Step label="HUMAN" value={path.human || "—"} tone={humanTone(path.human, path.evidence)} />
+                <Step label="WORKER" value={path.worker_claim || "\u2014"} tone={claimTone(path.worker_claim, path.evidence)} />
+                <div style={arrow}>\u2192</div>
+                <Step label="QC" value={path.qc_claim || "\u2014"} tone={claimTone(path.qc_claim, path.evidence)} />
+                <div style={arrow}>\u2192</div>
+                <Step label="EVIDENCE" value={path.evidence || "\u2014"} tone={evidenceTone(path.evidence)} />
+                <div style={arrow}>\u2192</div>
+                <Step label="HUMAN" value={path.human || "\u2014"} tone={humanTone(path.human, path.evidence)} />
               </div>
             </div>
           ))}
@@ -189,7 +190,7 @@ export default function TinkerersLivePage() {
           <Cell label="INDETERMINATE" value={snapshot.evidence_indeterminate} />
         </section>
 
-        <h2 style={level}>QC ↔ EVIDENCE</h2>
+        <h2 style={level}>QC \u2194 EVIDENCE</h2>
         <section style={grid}>
           <Cell label="AGREE" value={snapshot.qc_agrees} />
           <Cell label="DISAGREE" value={snapshot.qc_disagrees} />
@@ -267,6 +268,19 @@ const frame: CSSProperties = {
   padding: "28px 16px calc(72px + env(safe-area-inset-bottom, 0px))",
   boxSizing: "border-box",
   width: "100%",
+};
+
+const backBtn: CSSProperties = {
+  display: "inline-block",
+  marginBottom: 16,
+  padding: "14px 18px",
+  minHeight: 48,
+  borderRadius: 999,
+  border: "1px solid #eef2ef",
+  background: "#eef2ef",
+  color: "#071311",
+  fontWeight: 800,
+  textDecoration: "none",
 };
 
 const title: CSSProperties = {

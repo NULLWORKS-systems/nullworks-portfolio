@@ -1,7 +1,7 @@
 import styles from "../corporate.module.css";
 import TinkerersQr from "./TinkerersQr";
 
-const START_URL = "https://nullworks.systems/tinkerers";
+const CARD_URL = "https://nullworks.systems/tinkerers/run";
 
 export default function TinkerersPage() {
   return (
@@ -35,10 +35,14 @@ export default function TinkerersPage() {
             <a className={styles.secondary} href="#experiment">See the experiment</a>
           </div>
           <div style={{ marginTop: 28 }}>
-            <TinkerersQr url={START_URL} />
+            <TinkerersQr
+              url={CARD_URL}
+              label="SAME CODE AS THE CARD"
+              caption="Opens the run. A neighbor can scan your phone."
+            />
           </div>
           <p className={styles.body} style={{ marginTop: 18, maxWidth: 720 }}>
-            Scan opens this page, not the run. A neighbor can scan the code on your phone.
+            The metal cards already open the run. This is that same code.
             Anonymous live experiment. Do not paste private, confidential, or sensitive information.
             Experiment outputs may be retained for demo/research analysis.
           </p>

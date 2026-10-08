@@ -1,4 +1,5 @@
 import TinkerersQr from "../TinkerersQr";
+import GroupResultsLink from "./GroupResultsLink";
 
 const CARD_URL = "https://nullworks.systems/tinkerers/run";
 
@@ -27,6 +28,7 @@ export default function TinkerersRunLayout({
           caption="Neighbor scans this phone. Opens the run."
         />
       </div>
+      <GroupResultsLink />
       {children}
     </>
   );

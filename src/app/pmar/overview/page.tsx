@@ -69,6 +69,61 @@ function dueRank(schedule?: Schedule) {
   return 2;
 }
 
+function assetClass(kind: string) {
+  const k = (kind || '').toUpperCase();
+  if (k.includes('BALER')) return 'BALER';
+  if (k.includes('FORKLIFT')) return 'FORKLIFT';
+  if (k.includes('TUG')) return 'TUGGER';
+  if (k.includes('PALLET') || k.includes('JACK')) return 'JACK';
+  return 'OTHER';
+}
+
+function isRecent(iso: string | null | undefined) {
+  if (!iso) return false;
+  const t = new Date(iso).getTime();
+  return Number.isFinite(t) && Date.now() - t < 36 * 60 * 60 * 1000;
+}
+
+function HoursChart({ title, items, color }: { title: string; items: Row[]; color: string }) {
+  const list = items
+    .filter((r) => r.displayed_hours !== null && Number.isFinite(Number(r.displayed_hours)))
+    .slice()
+    .sort((a, b) => Number(b.displayed_hours) - Number(a.displayed_hours));
+  if (!list.length) return null;
+  const max = Math.max(...list.map((r) => Number(r.displayed_hours)), 1);
+  const rowH = 22;
+  const labelW = 92;
+  const padR = 78;
+  const width = 900;
+  const height = list.length * rowH + 8;
+  return (
+    <div style={{ ...bubble, padding: 16 }}>
+      <div style={{ fontSize: 12, fontWeight: 900, letterSpacing: '0.12em', color: '#f4f1e9', marginBottom: 10 }}>{title}</div>
+      <svg viewBox={`0 0 ${width} ${height}`} width="100%" height={Math.min(height, 420)} role="img" aria-label={title}>
+        {list.map((r, i) => {
+          const hours = Number(r.displayed_hours);
+          const barW = ((width - labelW - padR) * hours) / max;
+          const y = i * rowH + 2;
+          const recent = isRecent(r.last_scanned_at) && r.alias === 'FL13';
+          const fill = r.status === 'OUT OF SERVICE' ? '#dc2626' : recent ? '#fde047' : color;
+          return (
+            <g key={r.tag_id}>
+              <text x={0} y={y + 15} fill="#c8c3ba" fontSize={11} fontWeight={700}>
+                {r.alias}
+              </text>
+              <rect x={labelW} y={y + 3} width={barW} height={14} rx={3} fill={fill} />
+              <text x={labelW + barW + 6} y={y + 15} fill="#f4f1e9" fontSize={11} fontWeight={700}>
+                {hours.toLocaleString(undefined, { maximumFractionDigits: 1 })}
+                {r.status === 'OUT OF SERVICE' ? ' OUT' : recent ? ' NEW' : ''}
+              </text>
+            </g>
+          );
+        })}
+      </svg>
+    </div>
+  );
+}
+
 const pill: React.CSSProperties = {
   borderRadius: 999,
   padding: '4px 10px',
@@ -90,6 +145,7 @@ export default function Overview() {
   const [schedules, setSchedules] = useState<Record<string, Schedule>>({});
   const [error, setError] = useState('');
   const [sort, setSort] = useState<SortMode>('NUM');
+  const [refreshedAt, setRefreshedAt] = useState('');
 
   useEffect(() => {
     const saved = window.sessionStorage.getItem('pmars_overview_sort') as SortMode | null;
@@ -97,15 +153,31 @@ export default function Overview() {
   }, []);
 
   useEffect(() => {
-    Promise.all([
-      dbGet<Row[]>('pmars_tags?select=*'),
-      dbGet<Schedule[]>('pmars_pm_schedules?select=tag_id,cadence,next_due_on,last_completed_on'),
-    ])
-      .then(([tags, pm]) => {
+    let cancelled = false;
+    async function load() {
+      try {
+        const [tags, pm] = await Promise.all([
+          dbGet<Row[]>('pmars_tags?select=*'),
+          dbGet<Schedule[]>('pmars_pm_schedules?select=tag_id,cadence,next_due_on,last_completed_on'),
+        ]);
+        if (cancelled) return;
         setRows(tags);
         setSchedules(Object.fromEntries(pm.map((s) => [s.tag_id, s])));
-      })
-      .catch(() => setError('Could not load shared fleet data.'));
+        setError('');
+        setRefreshedAt(new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }));
+      } catch {
+        if (!cancelled) setError('Could not load shared fleet data.');
+      }
+    }
+    load();
+    const id = window.setInterval(load, 45000);
+    const onFocus = () => load();
+    window.addEventListener('focus', onFocus);
+    return () => {
+      cancelled = true;
+      window.clearInterval(id);
+      window.removeEventListener('focus', onFocus);
+    };
   }, []);
 
   function chooseSort(next: SortMode) {
@@ -144,6 +216,12 @@ export default function Overview() {
     return list;
   }, [rows, schedules, sort]);
 
+  const groups = useMemo(() => {
+    const map: Record<string, Row[]> = { FORKLIFT: [], JACK: [], TUGGER: [], BALER: [], OTHER: [] };
+    for (const r of rows) map[assetClass(r.kind)].push(r);
+    return map;
+  }, [rows]);
+
   const out = rows.filter((r) => r.status === 'OUT OF SERVICE').length;
   const overdue = rows.filter((r) => dueRank(schedules[r.tag_id]) === 0).length;
 
@@ -154,6 +232,9 @@ export default function Overview() {
         <header style={{ ...bubble, padding: 16 }}>
           <div style={{ fontSize: 12, fontWeight: 900, letterSpacing: '0.28em', color: '#4ade80' }}>PMARS LIVE</div>
           <h1 style={{ margin: '8px 0 0', fontSize: 36, fontWeight: 900 }}>MAINTENANCE OVERVIEW</h1>
+          {refreshedAt && (
+            <div style={{ marginTop: 6, fontSize: 12, color: 'rgba(255,255,255,0.45)' }}>Charts refresh every 45s · last {refreshedAt}</div>
+          )}
         </header>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 12 }}>
           <div style={{ ...bubble, padding: 16 }}>
@@ -169,6 +250,21 @@ export default function Overview() {
             <div style={{ fontSize: 12, color: 'rgba(252,165,165,0.8)' }}>OUT OF SERVICE</div>
           </div>
         </div>
+
+        {rows.length > 0 && (
+          <div style={{ display: 'grid', gap: 12 }}>
+            <HoursChart title="FORKLIFTS · displayed hours" items={groups.FORKLIFT} color="#86efac" />
+            <HoursChart title="PALLET JACKS · displayed hours" items={groups.JACK} color="#f6b73c" />
+            <HoursChart title="TUGGERS · displayed hours" items={groups.TUGGER} color="#7dd3fc" />
+            <HoursChart title="BALERS · displayed hours" items={groups.BALER} color="#c4b5fd" />
+            <div style={{ ...bubble, padding: '10px 16px', fontSize: 12, color: 'rgba(255,255,255,0.55)', display: 'flex', gap: 14, flexWrap: 'wrap' }}>
+              <span><span style={{ color: '#86efac' }}>■</span> IN SERVICE</span>
+              <span><span style={{ color: '#fde047' }}>■</span> NEW / RECENT</span>
+              <span><span style={{ color: '#dc2626' }}>■</span> OUT OF SERVICE</span>
+            </div>
+          </div>
+        )}
+
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 8 }}>
           {SORTS.map((option) => {
             const active = sort === option.id;

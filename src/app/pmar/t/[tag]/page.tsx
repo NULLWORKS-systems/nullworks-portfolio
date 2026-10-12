@@ -71,6 +71,15 @@ function dueState(nextDue: string | null) {
   return nextDue < todayISO() ? 'overdue' : 'ok';
 }
 
+function stampTime(iso: string | null | undefined) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  const date = `${d.getMonth() + 1}/${d.getDate()}`;
+  const time = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  return `${date} · ${time}`;
+}
+
 function shortDate(iso: string | null | undefined) {
   if (!iso) return '';
   const d = new Date(`${iso.slice(0, 10)}T12:00:00`);
@@ -411,9 +420,14 @@ export default function PMARTagPage() {
                 <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.2em', color: '#4ade80' }}>EVIDENCE</div>
                 <div style={{ display: 'grid', gap: 10, marginTop: 12 }}>
                   {photos.map((p, i) => (
-                    <a key={`${p.created_at}-${i}`} href={p.value_text || '#'} target="_blank" rel="noreferrer" style={{ display: 'block' }}>
-                      <img src={p.value_text || ''} alt={`Evidence ${i + 1}`} style={{ width: '100%', borderRadius: 12, display: 'block' }} />
-                    </a>
+                    <div key={`${p.created_at}-${i}`}>
+                      <a href={p.value_text || '#'} target="_blank" rel="noreferrer" style={{ display: 'block' }}>
+                        <img src={p.value_text || ''} alt={`Evidence ${i + 1}`} style={{ width: '100%', borderRadius: 12, display: 'block' }} />
+                      </a>
+                      <div style={{ marginTop: 4, fontSize: 11, color: 'rgba(255,255,255,0.45)', letterSpacing: '0.04em' }}>
+                        {stampTime(p.created_at)}
+                      </div>
+                    </div>
                   ))}
                 </div>
               </section>

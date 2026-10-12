@@ -88,6 +88,7 @@ export default function PMARTagPage() {
   const [schedule, setSchedule] = useState<Schedule | null>(null);
   const [lastNote, setLastNote] = useState('');
   const [workLog, setWorkLog] = useState<EventRow[]>([]);
+  const [photos, setPhotos] = useState<EventRow[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -99,7 +100,7 @@ export default function PMARTagPage() {
   const [workNote, setWorkNote] = useState('');
 
   async function loadRecord(currentTag: string) {
-    const [rows, schedules, events, work] = await Promise.all([
+    const [rows, schedules, events, work, pics] = await Promise.all([
       dbGet<Row[]>(`pmars_tags?tag_id=eq.${encodeURIComponent(currentTag)}&select=*`),
       dbGet<Schedule[]>(`pmars_pm_schedules?tag_id=eq.${encodeURIComponent(currentTag)}&select=*`),
       dbGet<EventRow[]>(
@@ -107,6 +108,9 @@ export default function PMARTagPage() {
       ),
       dbGet<EventRow[]>(
         `pmars_events?tag_id=eq.${encodeURIComponent(currentTag)}&event_type=eq.WORK_NOTE&select=event_type,value_text,created_at&order=created_at.desc&limit=5`,
+      ),
+      dbGet<EventRow[]>(
+        `pmars_events?tag_id=eq.${encodeURIComponent(currentTag)}&event_type=eq.PHOTO&select=event_type,value_text,created_at&order=created_at.desc&limit=20`,
       ),
     ]);
     if (rows[0]) {
@@ -116,6 +120,7 @@ export default function PMARTagPage() {
     setSchedule(schedules[0] || null);
     setLastNote(events[0]?.value_text || '');
     setWorkLog(work);
+    setPhotos(pics);
     return rows[0] || null;
   }
 
@@ -401,6 +406,18 @@ export default function PMARTagPage() {
                 <p style={{ marginTop: 16, color: 'rgba(254,202,202,0.9)', fontSize: 14, lineHeight: 1.4 }}>{lastNote}</p>
               )}
             </section>
+            {photos.length > 0 && (
+              <section style={{ ...bubble, padding: 16 }}>
+                <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.2em', color: '#4ade80' }}>EVIDENCE</div>
+                <div style={{ display: 'grid', gap: 10, marginTop: 12 }}>
+                  {photos.map((p, i) => (
+                    <a key={`${p.created_at}-${i}`} href={p.value_text || '#'} target="_blank" rel="noreferrer" style={{ display: 'block' }}>
+                      <img src={p.value_text || ''} alt={`Evidence ${i + 1}`} style={{ width: '100%', borderRadius: 12, display: 'block' }} />
+                    </a>
+                  ))}
+                </div>
+              </section>
+            )}
             <section style={{ ...bubble, padding: 24 }}>
               <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.2em', color: '#4ade80' }}>HOURS</div>
               <label style={{ display: 'block', marginTop: 12, color: 'rgba(255,255,255,0.55)', fontWeight: 700 }}>Displayed hours</label>

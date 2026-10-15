@@ -4,6 +4,7 @@ import ListeningPage from "../ListeningPage";
 import AlbumSwitch from "../AlbumSwitch";
 import { getArtistAlbums } from "../catalog";
 
+// Korean gothic doom opera single — 어댑터의 부재 under NON OPERA ITALICA
 const base = "https://foveyfclihpsnwhfchib.supabase.co/storage/v1/object/public/anvil-media/non-opera-italica-adapter";
 
 const tracks = [

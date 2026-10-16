@@ -21,7 +21,7 @@ const tracks = [
   { n: 12, title: "DER DOM ERHEBT SICH!", src: `${base}/12-track12.mp3`, dur: "5:18" },
   { n: 13, title: "Я ВЫБИРАЮ СКА!", src: `${base}/13-track13.mp3`, dur: "4:39" },
   { n: 14, title: "DIE FREIHEIT ZU WÄHLEN", src: `${base}/14-track14.mp3`, dur: "4:53" },
-  { n: 15, title: "EIN ORCHESTER, ZWEI WELTEN", src: `${base}/15-ein-orchester-zwei-welten.mp3`, dur: "3:03" },
+  { n: 15, title: "EIN ORCHESTER, ZWEI WELTEN", src: `${base}/15-track15.mp3`, dur: "3:03" },
 ];
 
 export const metadata: Metadata = {

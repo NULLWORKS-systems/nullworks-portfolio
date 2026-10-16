@@ -16,7 +16,7 @@ const tracks = [
   { n: 7, title: "СУД НАД ТУБОЙ!", src: `${base}/07-track07.mp3`, dur: "4:01" },
   { n: 8, title: "DAS ORCHESTER GEHÖRT NIEMANDEM", src: `${base}/08-track08.mp3`, dur: "4:58" },
   { n: 9, title: "ТУБА ИДЁТ СО МНОЙ!", src: `${base}/09-track09.mp3`, dur: "4:42" },
-  { n: 10, title: "AUCH STEIN KANN TANZEN!", src: `${base}/10-auch-stein-kann-tanzen.mp3`, dur: "5:32" },
+  { n: 10, title: "AUCH STEIN KANN TANZEN!", src: `${base}/10-track10.mp3`, dur: "5:32" },
   { n: 11, title: "МАРШ ЧЁРНОГО ЖЕЛЕЗА!", src: `${base}/11-marsh-chyornogo-zheleza.mp3`, dur: "5:47" },
   { n: 12, title: "DER DOM ERHEBT SICH!", src: `${base}/12-der-dom-erhebt-sich.mp3`, dur: "5:18" },
   { n: 13, title: "Я ВЫБИРАЮ СКА!", src: `${base}/13-ya-vybirayu-ska.mp3`, dur: "4:39" },

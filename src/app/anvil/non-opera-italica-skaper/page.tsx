@@ -18,7 +18,7 @@ const tracks = [
   { n: 9, title: "ТУБА ИДЁТ СО МНОЙ!", src: `${base}/09-track09.mp3`, dur: "4:42" },
   { n: 10, title: "AUCH STEIN KANN TANZEN!", src: `${base}/10-track10.mp3`, dur: "5:32" },
   { n: 11, title: "МАРШ ЧЁРНОГО ЖЕЛЕЗА!", src: `${base}/11-track11.mp3`, dur: "5:47" },
-  { n: 12, title: "DER DOM ERHEBT SICH!", src: `${base}/12-der-dom-erhebt-sich.mp3`, dur: "5:18" },
+  { n: 12, title: "DER DOM ERHEBT SICH!", src: `${base}/12-track12.mp3`, dur: "5:18" },
   { n: 13, title: "Я ВЫБИРАЮ СКА!", src: `${base}/13-ya-vybirayu-ska.mp3`, dur: "4:39" },
   { n: 14, title: "DIE FREIHEIT ZU WÄHLEN", src: `${base}/14-die-freiheit-zu-wahlen.mp3`, dur: "4:53" },
   { n: 15, title: "EIN ORCHESTER, ZWEI WELTEN", src: `${base}/15-ein-orchester-zwei-welten.mp3`, dur: "3:03" },

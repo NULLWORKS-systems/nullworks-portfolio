@@ -1,10 +1,11 @@
 import AnvilShell from "../AnvilShell";
 const releases=[
+["NON OPERA ITALICA","SKA-PERA","One orchestra. Two worlds. Fifteen songs.","/anvil/non-opera-italica-skaper"],
 ["9 VOLT","THURSDAY IS MONDAY","Single. Thursday is Monday. Tuesday is Friday. One day off.","/anvil/9-volt/thursday-is-monday"],
 ["9 VOLT","WELCOME TO THE CABLE","Single. Same little hole, different day.","/anvil/9-volt/welcome-to-the-cable"],
 ["9 VOLT","VEX LIKES SEX","1982. Eleven tracks. Peak-era masters.","/anvil/9-volt"],
 ["CROWNROT","ARACHNID","Athlete-soundtrack proof of concept","/anvil/crownrot/arachnid"],
-["聞き書き / KIKIGAKI","消える前に / Before It Disappears","Japanese memory folk","https://distrokid.com/hyperfollow/kikigaki/-kieru-mae-ni-before-it-disappears"],
+["허기기 / KIKIGAKI","지우기 전에 / Before It Disappears","Japanese memory folk","https://distrokid.com/hyperfollow/kikigaki/-kieru-mae-ni-before-it-disappears"],
 ["CROWNROT","KNUCKLES","Modern metalcore","https://distrokid.com/hyperfollow/crownrot1/knuckles"],
 ["CATBARF","Poop Zoomies","Groove-metal character comedy","https://distrokid.com/hyperfollow/catbarf/poop-zoomies"],
 ["CATBARF","Broken Plumbis","Groove metal","https://distrokid.com/hyperfollow/catbarf/broken-plumbis"],

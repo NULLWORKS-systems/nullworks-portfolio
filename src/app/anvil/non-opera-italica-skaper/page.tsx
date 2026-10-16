@@ -11,7 +11,7 @@ const tracks = [
   { n: 2, title: "DIE STILLE HAT GEWICHT", src: `${base}/02-track02.mp3`, dur: "5:58" },
   { n: 3, title: "ЭЙ, ГОСПОЖА ТИШИНА!", src: `${base}/03-track03.mp3`, dur: "4:52" },
   { n: 4, title: "ICH BIN DIE TIEFE", src: `${base}/04-track04.mp3`, dur: "5:48" },
-  { n: 5, title: "ДА КАК ВЫ СМЕЕТЕ?!", src: `${base}/05-da-kak-vy-smeete.mp3`, dur: "4:19" },
+  { n: 5, title: "ДА КАК ВЫ СМЕЕТЕ?!", src: `${base}/05-track05.mp3`, dur: "4:19" },
   { n: 6, title: "DU HAST DIE STILLE GEHÖRT", src: `${base}/06-du-hast-die-stille-gehort.mp3`, dur: "5:04" },
   { n: 7, title: "СУД НАД ТУБОЙ!", src: `${base}/07-sud-nad-tuboy.mp3`, dur: "4:01" },
   { n: 8, title: "DAS ORCHESTER GEHÖRT NIEMANDEM", src: `${base}/08-das-orchester-gehort-niemandem.mp3`, dur: "4:58" },

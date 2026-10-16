@@ -7,21 +7,21 @@ import { getArtistAlbums } from "../catalog";
 const base = "https://foveyfclihpsnwhfchib.supabase.co/storage/v1/object/public/anvil-media/non-opera-italica-skaper";
 
 const tracks = [
-  { n: 1, title: "CONFLICT", src: `${base}/01-conflict.mp3`, dur: "—" },
-  { n: 2, title: "DISCOVERY", src: `${base}/02-discovery.mp3`, dur: "—" },
-  { n: 3, title: "CHALLENGE", src: `${base}/03-challenge.mp3`, dur: "—" },
-  { n: 4, title: "ADAPTATION", src: `${base}/04-adaptation.mp3`, dur: "—" },
-  { n: 5, title: "MUTUAL RESPECT", src: `${base}/05-mutual-respect.mp3`, dur: "—" },
-  { n: 6, title: "FREEDOM", src: `${base}/06-freedom.mp3`, dur: "—" },
-  { n: 7, title: "THE ORCHESTRA SPEAKS", src: `${base}/07-the-orchestra-speaks.mp3`, dur: "—" },
-  { n: 8, title: "SKA-PERA VIII", src: `${base}/08-skaper-viii.mp3`, dur: "—" },
-  { n: 9, title: "SKA-PERA IX", src: `${base}/09-skaper-ix.mp3`, dur: "—" },
-  { n: 10, title: "SKA-PERA X", src: `${base}/10-skaper-x.mp3`, dur: "—" },
-  { n: 11, title: "SKA-PERA XI", src: `${base}/11-skaper-xi.mp3`, dur: "—" },
-  { n: 12, title: "SKA-PERA XII", src: `${base}/12-skaper-xii.mp3`, dur: "—" },
-  { n: 13, title: "SKA-PERA XIII", src: `${base}/13-skaper-xiii.mp3`, dur: "—" },
-  { n: 14, title: "SKA-PERA XIV", src: `${base}/14-skaper-xiv.mp3`, dur: "—" },
-  { n: 15, title: "SKA-PERA XV", src: `${base}/15-skaper-xv.mp3`, dur: "—" },
+  { n: 1, title: "ПЛЯШИ, ПОКА ГОРИТ! (DANCE WHILE IT BURNS!)", src: `${base}/01-track01.mp3`, dur: "3:32" },
+  { n: 2, title: "DIE STILLE HAT GEWICHT", src: `${base}/02-die-stille-hat-gewicht.mp3`, dur: "5:58" },
+  { n: 3, title: "ЭЙ, ГОСПОЖА ТИШИНА!", src: `${base}/03-ey-gospozha-tishina.mp3`, dur: "4:52" },
+  { n: 4, title: "ICH BIN DIE TIEFE", src: `${base}/04-ich-bin-die-tiefe.mp3`, dur: "5:48" },
+  { n: 5, title: "ДА КАК ВЫ СМЕЕТЕ?!", src: `${base}/05-da-kak-vy-smeete.mp3`, dur: "4:19" },
+  { n: 6, title: "DU HAST DIE STILLE GEHÖRT", src: `${base}/06-du-hast-die-stille-gehort.mp3`, dur: "5:04" },
+  { n: 7, title: "СУД НАД ТУБОЙ!", src: `${base}/07-sud-nad-tuboy.mp3`, dur: "4:01" },
+  { n: 8, title: "DAS ORCHESTER GEHÖRT NIEMANDEM", src: `${base}/08-das-orchester-gehort-niemandem.mp3`, dur: "4:58" },
+  { n: 9, title: "ТУБА ИДЁТ СО МНОЙ!", src: `${base}/09-tuba-idyot-so-mnoy.mp3`, dur: "4:42" },
+  { n: 10, title: "AUCH STEIN KANN TANZEN!", src: `${base}/10-auch-stein-kann-tanzen.mp3`, dur: "5:32" },
+  { n: 11, title: "МАРШ ЧЁРНОГО ЖЕЛЕЗА!", src: `${base}/11-marsh-chyornogo-zheleza.mp3`, dur: "5:47" },
+  { n: 12, title: "DER DOM ERHEBT SICH!", src: `${base}/12-der-dom-erhebt-sich.mp3`, dur: "5:18" },
+  { n: 13, title: "Я ВЫБИРАЮ СКА!", src: `${base}/13-ya-vybirayu-ska.mp3`, dur: "4:39" },
+  { n: 14, title: "DIE FREIHEIT ZU WÄHLEN", src: `${base}/14-die-freiheit-zu-wahlen.mp3`, dur: "4:53" },
+  { n: 15, title: "EIN ORCHESTER, ZWEI WELTEN", src: `${base}/15-ein-orchester-zwei-welten.mp3`, dur: "3:03" },
 ];
 
 export const metadata: Metadata = {

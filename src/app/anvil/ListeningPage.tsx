@@ -9,6 +9,7 @@ export type ListeningTrack = {
   src?: string;
   dur?: string;
   note?: string;
+  artSrc?: string;
 };
 
 export default function ListeningPage({
@@ -122,75 +123,90 @@ export default function ListeningPage({
             ▶ {albumMode ? "PLAYING ALBUM IN ORDER" : "PLAY ALL IN ORDER"}
           </button>
         </header>
-        <div style={{ display: "grid", gap: 12, marginTop: 18 }}>
+        <div style={{ display: "grid", gap: 16, marginTop: 18 }}>
           {tracks.map((t, i) => (
             <article
               key={t.src ?? t.id ?? t.title}
               style={{
-                display: "grid",
-                gridTemplateColumns: "72px 1fr",
-                gap: 13,
                 background: active === i ? "#ffffff10" : "#ffffff08",
                 border: `1px solid ${active === i ? accent + "88" : "#ffffff14"}`,
                 borderRadius: 18,
                 padding: 12,
               }}
             >
-              <div
-                aria-hidden
-                style={{
-                  width: 72,
-                  height: 72,
-                  borderRadius: 14,
-                  display: "grid",
-                  placeItems: "center",
-                  background: `linear-gradient(145deg,${accent}33,#0008)`,
-                  border: `1px solid ${accent}66`,
-                  color: accent,
-                  fontWeight: 950,
-                  fontSize: 24,
-                }}
-              >
-                {String(t.n).padStart(2, "0")}
-              </div>
-              <div style={{ minWidth: 0 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "baseline" }}>
-                  <div style={{ fontWeight: 900, fontSize: 15, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                    {t.title}
-                  </div>
-                  <span style={{ fontSize: 11, color: "#8f8a83", flex: "0 0 auto" }}>{t.dur}</span>
-                </div>
-                {t.note && (
-                  <div style={{ fontSize: 12, lineHeight: 1.4, color: "#aaa59c", marginTop: 5 }}>{t.note}</div>
-                )}
-                <audio
-                  ref={(el) => {
-                    refs.current[i] = el;
+              {t.artSrc && (
+                <img
+                  src={t.artSrc}
+                  alt={`${t.title} art`}
+                  style={{
+                    display: "block",
+                    width: "100%",
+                    height: "auto",
+                    borderRadius: 12,
+                    marginBottom: 12,
+                    border: "1px solid #ffffff18",
+                    objectFit: "cover",
+                    maxHeight: 280,
                   }}
-                  onPlay={() => play(i)}
-                  onEnded={() => ended(i)}
-                  controls
-                  preload="metadata"
-                  src={t.src ?? `/api/audio/${t.id}`}
-                  style={{ width: "100%", height: 38, marginTop: 9 }}
                 />
-                {t.src && (
-                  <a
-                    href={t.src}
-                    download
-                    style={{
-                      display: "inline-block",
-                      marginTop: 8,
-                      color: accent,
-                      fontWeight: 800,
-                      fontSize: 11,
-                      letterSpacing: 1,
-                      textDecoration: "none",
+              )}
+              <div style={{ display: "grid", gridTemplateColumns: "72px 1fr", gap: 13 }}>
+                <div
+                  aria-hidden
+                  style={{
+                    width: 72,
+                    height: 72,
+                    borderRadius: 14,
+                    display: "grid",
+                    placeItems: "center",
+                    background: `linear-gradient(145deg,${accent}33,#0008)`,
+                    border: `1px solid ${accent}66`,
+                    color: accent,
+                    fontWeight: 950,
+                    fontSize: 24,
+                  }}
+                >
+                  {String(t.n).padStart(2, "0")}
+                </div>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "baseline" }}>
+                    <div style={{ fontWeight: 900, fontSize: 15, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      {t.title}
+                    </div>
+                    <span style={{ fontSize: 11, color: "#8f8a83", flex: "0 0 auto" }}>{t.dur}</span>
+                  </div>
+                  {t.note && (
+                    <div style={{ fontSize: 12, lineHeight: 1.4, color: "#aaa59c", marginTop: 5 }}>{t.note}</div>
+                  )}
+                  <audio
+                    ref={(el) => {
+                      refs.current[i] = el;
                     }}
-                  >
-                    DOWNLOAD MP3
-                  </a>
-                )}
+                    onPlay={() => play(i)}
+                    onEnded={() => ended(i)}
+                    controls
+                    preload="metadata"
+                    src={t.src ?? `/api/audio/${t.id}`}
+                    style={{ width: "100%", height: 38, marginTop: 9 }}
+                  />
+                  {t.src && (
+                    <a
+                      href={t.src}
+                      download
+                      style={{
+                        display: "inline-block",
+                        marginTop: 8,
+                        color: accent,
+                        fontWeight: 800,
+                        fontSize: 11,
+                        letterSpacing: 1,
+                        textDecoration: "none",
+                      }}
+                    >
+                      DOWNLOAD MP3
+                    </a>
+                  )}
+                </div>
               </div>
             </article>
           ))}

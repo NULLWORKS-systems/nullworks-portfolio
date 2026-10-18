@@ -20,6 +20,7 @@ const tracks = [
   { n: 10, title: "X. ITHACA", src: `${base}/10-ithaca.mp3`, dur: "7:15", artSrc: `${base}/10-ithaca.png`, note: "FINIS INITIVM EST. OMNIA CIRCVLANT." },
   { n: 11, title: "XI. ARCUS", src: `${base}/11-arcus.mp3`, dur: "7:17", artSrc: `${base}/11-arcus.png`, note: "ODYSSEVS SVM. OMNIA REVERTENTVR." },
   { n: 12, title: "XII. LECTVS", src: `${base}/12-lectus.mp3`, dur: "7:12", artSrc: `${base}/12-lectus.png`, note: "RADICES MANENT. OMNIA MANENT." },
+  { n: 13, title: "PROLOGVS · POSTLVDIUM", src: `${base}/13-prologus.mp3`, dur: "7:03", artSrc: `${base}/13-prologus.png`, note: "AB ITINERE AD DOMVM. OMNIA MANENT ALITER." },
 ];
 
 export const metadata: Metadata = {

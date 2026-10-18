@@ -5,7 +5,7 @@ import AlbumSwitch from "../AlbumSwitch";
 import { getArtistAlbums } from "../catalog";
 
 const base = "https://foveyfclihpsnwhfchib.supabase.co/storage/v1/object/public/anvil-media/non-opera-italica-odyssea";
-const cover = "https://foveyfclihpsnwhfchib.supabase.co/storage/v1/object/public/anvil-media/non-opera-italica/cover";
+const cover = `${base}/poster.png`;
 
 const tracks = [
   { n: 1, title: "I. TROIA ARDET", src: `${base}/01-troia-ardet.mp3`, dur: "6:44", artSrc: `${base}/01-troia-ardet.png`, note: "IGNIS INITIVM EST. NON OMNES REVENIVNT." },

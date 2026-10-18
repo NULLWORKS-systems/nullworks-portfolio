@@ -8,7 +8,7 @@ const base = "https://foveyfclihpsnwhfchib.supabase.co/storage/v1/object/public/
 const cover = "https://foveyfclihpsnwhfchib.supabase.co/storage/v1/object/public/anvil-media/non-opera-italica/cover";
 
 const tracks = [
-  { n: 1, title: "I. ITINERE RELINQVERE", src: `${base}/01-itinere.mp3`, dur: "—", artSrc: `${base}/01-itinere.png`, note: "OMNIA INCIPIVNT CVM DISCESSV." },
+  { n: 1, title: "I. TROIA ARDET", src: `${base}/01-troia-ardet.mp3`, dur: "6:44", artSrc: `${base}/01-troia-ardet.png`, note: "IGNIS INITIVM EST. NON OMNES REVENIVNT." },
   { n: 2, title: "II. LOTOPHAGI OBLIVIO", src: `${base}/02-lotophagi.mp3`, dur: "—", artSrc: `${base}/02-lotophagi.png`, note: "DVLCIS OBLIVIO PERICVLVM EST." },
   { n: 3, title: "III. CYCLOPS HYBRIS", src: `${base}/03-cyclops.mp3`, dur: "—", artSrc: `${base}/03-cyclops.png`, note: "QVI NOS DESPICIT SVAM CLADEN PARAT." },
   { n: 4, title: "IV. CIRCE MVTATIO", src: `${base}/04-circe.mp3`, dur: "—", artSrc: `${base}/04-circe.png`, note: "NON OMNIA SVNT QVAE VIDENTVR." },

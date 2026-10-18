@@ -17,7 +17,7 @@ const tracks = [
   { n: 7, title: "VII. SCYLLA ET CHARYBDIS", src: `${base}/07-scylla.mp3`, dur: "7:17", artSrc: `${base}/07-scylla.png`, note: "INTER PERICVLA NVLLA SALVS. OMNIA VOLVENTVR." },
   { n: 8, title: "VIII. SOLIS PECORA", src: `${base}/08-solis.mp3`, dur: "7:18", artSrc: `${base}/08-solis.png`, note: "PANIS EX CINERE. OMNIA CRESCVNT EX CINERE." },
   { n: 9, title: "IX. CALYPSO", src: `${base}/09-calypso.mp3`, dur: "7:15", artSrc: `${base}/09-calypso.png`, note: "DVLCE PERICVLVM. OMNIA TRANSIT." },
-  { n: 10, title: "X. ITHACA APPROPINQVATIO", src: `${base}/10-ithaca.mp3`, dur: "—", artSrc: `${base}/10-ithaca.png`, note: "DOMVS VIDETVR SED NVNDVM TENETVR." },
+  { n: 10, title: "X. ITHACA", src: `${base}/10-ithaca.mp3`, dur: "7:15", artSrc: `${base}/10-ithaca.png`, note: "FINIS INITIVM EST. OMNIA CIRCVLANT." },
   { n: 11, title: "XI. ARCVS IVSTITIA", src: `${base}/11-arcus.mp3`, dur: "—", artSrc: `${base}/11-arcus.png`, note: "SCIENTIA QVI SVM." },
   { n: 12, title: "XII. LECTVS RECONCILIATIO", src: `${base}/12-lectus.mp3`, dur: "—", artSrc: `${base}/12-lectus.png`, note: "RADICES MANENT OMNIA COMPLETVR." },
 ];

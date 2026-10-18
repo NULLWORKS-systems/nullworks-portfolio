@@ -14,7 +14,7 @@ const tracks = [
   { n: 4, title: "IV. CIRCE", src: `${base}/04-circe.mp3`, dur: "7:13", artSrc: `${base}/04-circe.png`, note: "SVAVITAS EST CAPTIVITAS. OMNIA HABENT PRETIVM." },
   { n: 5, title: "V. AD INFEROS", src: `${base}/05-ad-inferos.mp3`, dur: "7:13", artSrc: `${base}/05-ad-inferos.png`, note: "VIVOS ROGAT MORTVOS. OMNIA AD VNVM." },
   { n: 6, title: "VI. SIRENES", src: `${base}/06-sirenes.mp3`, dur: "7:16", artSrc: `${base}/06-sirenes.png`, note: "PVLCHRITVDO VOCAT. RVINA RESPONDET." },
-  { n: 7, title: "VII. SCYLLA ET CHARYBDIS INTERITVM", src: `${base}/07-scylla.mp3`, dur: "—", artSrc: `${base}/07-scylla.png`, note: "INTER DVOS MALA ITER TAMEN." },
+  { n: 7, title: "VII. SCYLLA ET CHARYBDIS", src: `${base}/07-scylla.mp3`, dur: "7:17", artSrc: `${base}/07-scylla.png`, note: "INTER PERICVLA NVLLA SALVS. OMNIA VOLVENTVR." },
   { n: 8, title: "VIII. SOLIS PECORA RAPACITAS", src: `${base}/08-solis.mp3`, dur: "—", artSrc: `${base}/08-solis.png`, note: "SVPERBIA SVMMVM PRETIVM HABENT." },
   { n: 9, title: "IX. CALYPSO DETENTIO", src: `${base}/09-calypso.mp3`, dur: "—", artSrc: `${base}/09-calypso.png`, note: "TEMPORA FVGIVNT SED COR MANET." },
   { n: 10, title: "X. ITHACA APPROPINQVATIO", src: `${base}/10-ithaca.mp3`, dur: "—", artSrc: `${base}/10-ithaca.png`, note: "DOMVS VIDETVR SED NVNDVM TENETVR." },

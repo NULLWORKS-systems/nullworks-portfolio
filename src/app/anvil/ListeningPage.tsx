@@ -145,8 +145,8 @@ export default function ListeningPage({
                     borderRadius: 12,
                     marginBottom: 12,
                     border: "1px solid #ffffff18",
-                    objectFit: "cover",
-                    maxHeight: 280,
+                    objectFit: "contain",
+                    background: "#000",
                   }}
                 />
               )}

@@ -54,12 +54,16 @@ export default function Explorer({entries,newsletterEnabled}: Props){
           <div className={styles.heroActions}><a href="#learn" className={styles.primary}>Start learning <ArrowRight size={18}/></a><a href="#newsletter" className={styles.secondary}>Get the daily email <Mail size={16}/></a></div>
           <div className={styles.microfacts}><span><BookOpen size={16}/> Five facts</span><span><Clock3 size={16}/> Two minutes</span><span><Music2 size={16}/> One original song</span></div>
         </div>
-        <div className={styles.heroGraphic} aria-label="Illustration of geography, music, and curiosity">
-          <div className={`${styles.orbit} ${styles.orbitOne}`} /><div className={`${styles.orbit} ${styles.orbitTwo}`} />
-          <span className={`${styles.orbLabel} ${styles.orbTop}`}>THE WORLD IS<br/>YOUR CLASSROOM ↗</span>
-          <div className={styles.globe}><div className={styles.globeLineV}/><div className={styles.globeLineH}/><span>🌍</span></div>
-          <div className={styles.musicNote}>♫</div><div className={styles.starOne}>✳</div><div className={styles.starTwo}>✳</div>
-          <span className={`${styles.orbLabel} ${styles.orbBottom}`}>KNOW SOMETHING<br/>YOU DIDN’T YESTERDAY.</span>
+        <div className={styles.heroArtwork}>
+          <img
+            src="/two-minutes-smarter/earth-hero.webp"
+            alt="Illustrated Earth surrounded by elegant teal and gold orbital paths, stars, and a musical note"
+            width={1448}
+            height={1086}
+            loading="eager"
+            fetchPriority="high"
+            decoding="async"
+          />
         </div>
       </section>
       <section className={styles.stats} aria-label="The format"><div><strong>01</strong><span>NEW SUBJECT<br/>EVERY DAY</span></div><div><strong>05</strong><span>FACTS YOU'LL<br/>ACTUALLY REMEMBER</span></div><div><strong>02</strong><span>MINUTES TO<br/>LEARN SOMETHING</span></div></section>

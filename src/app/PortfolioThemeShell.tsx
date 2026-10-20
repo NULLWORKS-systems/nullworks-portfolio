@@ -6,6 +6,7 @@ import OscilloscopeBackground from "./receipt-wallet/OscilloscopeBackground";
 
 const preservedVisualRoutes = [
   "/field-notes",
+  "/two-minutes-smarter",
   "/ciris-proof",
   "/ciris-review",
 ];

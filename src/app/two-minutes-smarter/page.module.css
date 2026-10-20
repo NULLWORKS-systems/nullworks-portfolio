@@ -2,3 +2,30 @@
 @media(max-width:950px){.hero{grid-template-columns:1fr;min-height:0;padding-top:62px}.heroGraphic{max-width:none;height:360px}.globe span{font-size:170px}.sectionTop{align-items:start}.lessonContent{margin-left:0}.newsletterInner{gap:25px}.hero h1{font-size:clamp(64px,11vw,100px)}}
 @media(max-width:680px){.topbar{padding:16px 18px}.topLink{font-size:11px}.hero{padding:48px 21px 36px}.hero h1{font-size:clamp(55px,13.5vw,82px)}.heroDeck{font-size:16px}.heroActions{gap:16px;margin:29px 0}.heroGraphic{height:270px}.globe{width:190px}.globe span{font-size:115px}.musicNote{font-size:61px}.orbLabel{font-size:7px}.microfacts{gap:13px;font-size:10px}.stats{margin:0 15px}.stats>div{flex-direction:column;gap:5px;padding:15px 4px;text-align:center}.stats strong{font-size:36px}.stats span{font-size:7px;letter-spacing:.06em}.learn{padding:67px 17px}.sectionTop{display:block}.sectionTop h2,.newsletter h2{font-size:clamp(39px,9vw,58px)}.sectionSub{margin-top:15px}.searchBox{margin-top:27px;padding:15px;gap:12px}.searchBox input{font-size:14px}.searchHint{display:none}.lessonHeader{gap:13px;padding:22px 0}.flag{width:68px;height:72px;font-size:39px}.lessonKicker{font-size:8px}.lessonIdentity h3{font-size:29px}.lessonIdentity p{font-size:12px}.lessonTags{gap:8px}.lessonTags span{font-size:9px}.openCircle{width:30px;height:30px}.openCircle svg{width:17px}.lessonContent{grid-template-columns:1fr;gap:16px}.songAside{max-width:380px;width:100%;margin:auto}.newsletter{margin:0 13px 45px}.newsletterInner{grid-template-columns:1fr;padding:35px 21px}.footer{flex-wrap:wrap;gap:15px;padding:26px 18px}.footer>div{flex-basis:calc(100% - 80px)}.footer>span{margin-left:0}.footer .footMark{font-size:30px}}
 @media(prefers-reduced-motion:reduce){.page *{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
+
+/* Two Minutes Smarter: approved editorial Earth artwork. The SVG-like emoji globe is retired. */
+.heroArtwork{
+  width:100%;
+  max-width:650px;
+  margin-inline:auto;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  isolation:isolate;
+}
+.heroArtwork img{
+  display:block;
+  width:100%;
+  height:auto;
+  object-fit:contain;
+  border:0;
+  border-radius:0;
+  filter:drop-shadow(0 22px 32px rgba(22,74,65,.10));
+}
+@media(max-width:950px){
+  .heroArtwork{max-width:650px;}
+}
+@media(max-width:680px){
+  .heroArtwork{width:calc(100% + 22px);max-width:none;margin-inline:-11px;}
+  .heroArtwork img{filter:drop-shadow(0 12px 24px rgba(22,74,65,.07));}
+}

@@ -1,0 +1,17 @@
+record_type: NULLWORKS_CIRIS_ASSURANCE_RUN_REQUEST
+record_id: NW-CIRIS-RUNTIME-RUN-002
+requested_at_local: "2026-07-31T05:13:00-07:00"
+requested_by: Mason Perry
+final_human_authority: Mason Perry
+campaign: V2_CORRECTED
+changes_from_run_001:
+  - corrected one over-literal documentary source check
+  - added direct imported-code WiseAuthorityService jurisdiction probe
+  - removed inappropriate Cargo --locked requirement because the pinned repo has no committed Cargo.lock
+  - retained exact CIRISAgent and CIRISPersist source pins
+pins:
+  CIRISAgent: 7f2369bed22c626404a1dcf8e09bfeb81a573d82
+  CIRISPersist: e8cdb535b60a549948f2b0ceb43deb6921009260
+truth_boundary: >-
+  Selected project tests and a narrow core-method probe may be independently executed.
+  This is not production observation, regulatory certification, or proof of universal correctness.

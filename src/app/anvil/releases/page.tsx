@@ -1,5 +1,6 @@
 import AnvilShell from "../AnvilShell";
 const releases=[
+["NULLWORKS","NO SINGLE POINT OF DOOM","Goofy wrap. Evidence before claims.","/anvil/no-single-point-of-doom"],
 ["NON OPERA ITALICA","SKA-PERA","One orchestra. Two worlds. Fifteen songs.","/anvil/non-opera-italica-skaper"],
 ["9 VOLT","THURSDAY IS MONDAY","Single. Thursday is Monday. Tuesday is Friday. One day off.","/anvil/9-volt/thursday-is-monday"],
 ["9 VOLT","WELCOME TO THE CABLE","Single. Same little hole, different day.","/anvil/9-volt/welcome-to-the-cable"],

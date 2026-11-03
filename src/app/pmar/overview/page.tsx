@@ -78,10 +78,13 @@ function assetClass(kind: string) {
   return 'OTHER';
 }
 
-function isRecent(iso: string | null | undefined) {
+function isToday(iso: string | null | undefined) {
   if (!iso) return false;
-  const t = new Date(iso).getTime();
-  return Number.isFinite(t) && Date.now() - t < 36 * 60 * 60 * 1000;
+  const t = new Date(iso);
+  const now = new Date();
+  return t.getUTCFullYear() === now.getUTCFullYear() &&
+         t.getUTCMonth() === now.getUTCMonth() &&
+         t.getUTCDate() === now.getUTCDate();
 }
 
 function HoursChart({ title, items, color }: { title: string; items: Row[]; color: string }) {
@@ -104,8 +107,8 @@ function HoursChart({ title, items, color }: { title: string; items: Row[]; colo
           const hours = Number(r.displayed_hours);
           const barW = ((width - labelW - padR) * hours) / max;
           const y = i * rowH + 2;
-          const recent = isRecent(r.last_scanned_at) && r.alias === 'FL13';
-          const fill = r.status === 'OUT OF SERVICE' ? '#dc2626' : recent ? '#fde047' : color;
+          const today = isToday(r.last_scanned_at);
+          const fill = r.status === 'OUT OF SERVICE' ? '#dc2626' : today ? '#fde047' : color;
           return (
             <g key={r.tag_id}>
               <text x={0} y={y + 15} fill="#c8c3ba" fontSize={11} fontWeight={700}>
@@ -114,7 +117,7 @@ function HoursChart({ title, items, color }: { title: string; items: Row[]; colo
               <rect x={labelW} y={y + 3} width={barW} height={14} rx={3} fill={fill} />
               <text x={labelW + barW + 6} y={y + 15} fill="#f4f1e9" fontSize={11} fontWeight={700}>
                 {hours.toLocaleString(undefined, { maximumFractionDigits: 1 })}
-                {r.status === 'OUT OF SERVICE' ? ' OUT' : recent ? ' NEW' : ''}
+                {r.status === 'OUT OF SERVICE' ? ' OUT' : today ? ' TODAY' : ''}
               </text>
             </g>
           );
@@ -222,8 +225,13 @@ export default function Overview() {
     return map;
   }, [rows]);
 
+  const jackRows = groups.JACK.filter(r => r.displayed_hours !== null && Number(r.displayed_hours) > 0);
+  const avgHours = jackRows.length ? Math.round(jackRows.reduce((s, r) => s + Number(r.displayed_hours), 0) / jackRows.length) : 0;
+  const avgPerDay = jackRows.length ? (avgHours / 365).toFixed(1) : '0'; // rough estimate; refined in DB query
+
   const out = rows.filter((r) => r.status === 'OUT OF SERVICE').length;
   const overdue = rows.filter((r) => dueRank(schedules[r.tag_id]) === 0).length;
+  const scannedToday = rows.filter(r => isToday(r.last_scanned_at) && assetClass(r.kind) === 'JACK').length;
 
   return (
     <main style={{ position: 'relative', minHeight: '100vh', padding: '32px 20px', color: '#fff' }}>
@@ -251,6 +259,15 @@ export default function Overview() {
           </div>
         </div>
 
+        {jackRows.length > 0 && (
+          <div style={{ ...bubble, padding: 16, fontSize: 14 }}>
+            <div style={{ fontWeight: 900, marginBottom: 6 }}>PALLET JACKS · USAGE</div>
+            <div>Avg displayed hours: <b>{avgHours.toLocaleString()}</b></div>
+            <div>Rough avg usage: <b>~{avgPerDay} hrs/day</b> across fleet (based on current meter / year)</div>
+            <div style={{ marginTop: 4, color: '#fde047' }}>{scannedToday} scanned today (highlighted yellow)</div>
+          </div>
+        )}
+
         {rows.length > 0 && (
           <div style={{ display: 'grid', gap: 12 }}>
             <HoursChart title="FORKLIFTS · displayed hours" items={groups.FORKLIFT} color="#86efac" />
@@ -259,7 +276,7 @@ export default function Overview() {
             <HoursChart title="BALERS · displayed hours" items={groups.BALER} color="#c4b5fd" />
             <div style={{ ...bubble, padding: '10px 16px', fontSize: 12, color: 'rgba(255,255,255,0.55)', display: 'flex', gap: 14, flexWrap: 'wrap' }}>
               <span><span style={{ color: '#86efac' }}>■</span> IN SERVICE</span>
-              <span><span style={{ color: '#fde047' }}>■</span> NEW / RECENT</span>
+              <span><span style={{ color: '#fde047' }}>■</span> SCANNED TODAY</span>
               <span><span style={{ color: '#dc2626' }}>■</span> OUT OF SERVICE</span>
             </div>
           </div>
@@ -302,11 +319,12 @@ export default function Overview() {
             const dateLabel = shortDate(lastWork);
             const rank = dueRank(schedule);
             const dueLabel = schedule?.next_due_on && rank < 3 ? shortDate(schedule.next_due_on) : null;
+            const today = isToday(r.last_scanned_at);
             return (
-              <Link key={r.tag_id} href={`/pmar/t/${r.tag_id}`} style={{ ...bubble, padding: 16, display: 'block', color: '#fff', textDecoration: 'none' }}>
+              <Link key={r.tag_id} href={`/pmar/t/${r.tag_id}`} style={{ ...bubble, padding: 16, display: 'block', color: '#fff', textDecoration: 'none', border: today ? '1px solid #fde047' : undefined }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start' }}>
                   <div>
-                    <div style={{ fontSize: 24, fontWeight: 900 }}>{r.alias}</div>
+                    <div style={{ fontSize: 24, fontWeight: 900 }}>{r.alias}{today ? ' · TODAY' : ''}</div>
                     <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)' }}>{r.kind} · {r.tag_id}</div>
                   </div>
                   <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'flex-end', gap: 6 }}>

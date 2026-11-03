@@ -87,6 +87,8 @@ function isToday(iso: string | null | undefined) {
          t.getUTCDate() === now.getUTCDate();
 }
 
+const TODAY_COLOR = '#f472b6'; // pink-400 for contrast against yellow/orange
+
 function HoursChart({ title, items, color }: { title: string; items: Row[]; color: string }) {
   const list = items
     .filter((r) => r.displayed_hours !== null && Number.isFinite(Number(r.displayed_hours)))
@@ -108,7 +110,7 @@ function HoursChart({ title, items, color }: { title: string; items: Row[]; colo
           const barW = ((width - labelW - padR) * hours) / max;
           const y = i * rowH + 2;
           const today = isToday(r.last_scanned_at);
-          const fill = r.status === 'OUT OF SERVICE' ? '#dc2626' : today ? '#fde047' : color;
+          const fill = r.status === 'OUT OF SERVICE' ? '#dc2626' : today ? TODAY_COLOR : color;
           return (
             <g key={r.tag_id}>
               <text x={0} y={y + 15} fill="#c8c3ba" fontSize={11} fontWeight={700}>
@@ -264,7 +266,7 @@ export default function Overview() {
             <div style={{ fontWeight: 900, marginBottom: 6 }}>PALLET JACKS · USAGE</div>
             <div>Avg displayed hours: <b>{avgHours.toLocaleString()}</b></div>
             <div>Rough avg usage: <b>~{avgPerDay} hrs/day</b> across fleet (based on current meter / year)</div>
-            <div style={{ marginTop: 4, color: '#fde047' }}>{scannedToday} scanned today (highlighted yellow)</div>
+            <div style={{ marginTop: 4, color: TODAY_COLOR }}>{scannedToday} scanned today (highlighted pink)</div>
           </div>
         )}
 
@@ -276,7 +278,7 @@ export default function Overview() {
             <HoursChart title="BALERS · displayed hours" items={groups.BALER} color="#c4b5fd" />
             <div style={{ ...bubble, padding: '10px 16px', fontSize: 12, color: 'rgba(255,255,255,0.55)', display: 'flex', gap: 14, flexWrap: 'wrap' }}>
               <span><span style={{ color: '#86efac' }}>■</span> IN SERVICE</span>
-              <span><span style={{ color: '#fde047' }}>■</span> SCANNED TODAY</span>
+              <span><span style={{ color: TODAY_COLOR }}>■</span> SCANNED TODAY</span>
               <span><span style={{ color: '#dc2626' }}>■</span> OUT OF SERVICE</span>
             </div>
           </div>
@@ -321,7 +323,7 @@ export default function Overview() {
             const dueLabel = schedule?.next_due_on && rank < 3 ? shortDate(schedule.next_due_on) : null;
             const today = isToday(r.last_scanned_at);
             return (
-              <Link key={r.tag_id} href={`/pmar/t/${r.tag_id}`} style={{ ...bubble, padding: 16, display: 'block', color: '#fff', textDecoration: 'none', border: today ? '1px solid #fde047' : undefined }}>
+              <Link key={r.tag_id} href={`/pmar/t/${r.tag_id}`} style={{ ...bubble, padding: 16, display: 'block', color: '#fff', textDecoration: 'none', border: today ? `1px solid ${TODAY_COLOR}` : undefined }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start' }}>
                   <div>
                     <div style={{ fontSize: 24, fontWeight: 900 }}>{r.alias}{today ? ' · TODAY' : ''}</div>

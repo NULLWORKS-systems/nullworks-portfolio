@@ -35,5 +35,32 @@ jobs:
         with:
           node-version: '24'
           cache: npm
-      - run: npm ci
+      # Temporary: package-lock.json lacks the declared ai dependency.
+      # Install from manifest without modifying the committed lockfile.
+      - run: npm install --no-package-lock
       - run: npx tsc --noEmit
+  lockfile-audit:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Check root dependency manifest against lockfile
+        run: |
+          node - <<'NODE'
+          const fs = require('node:fs');
+          const manifest = JSON.parse(fs.readFileSync('package.json','utf8'));
+          const lock = JSON.parse(fs.readFileSync('package-lock.json','utf8'));
+          const root = lock.packages?.[''] ?? {};
+          const missing = [];
+          for (const section of ['dependencies','devDependencies']) {
+            for (const [name, version] of Object.entries(manifest[section] ?? {})) {
+              if (root[section]?.[name] !== version) missing.push(`${section}: ${name} ${version} (lock: ${root[section]?.[name] ?? 'MISSING'})`);
+            }
+          }
+          if (missing.length) { console.error('Lockfile drift:\\n' + missing.join('\\n')); process.exitCode = 1; }
+          else console.log('Root manifest matches lockfile');
+          NODE

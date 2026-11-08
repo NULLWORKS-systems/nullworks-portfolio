@@ -13,8 +13,8 @@ export async function GET() {
   html = html.replaceAll("assurance@nullworks.ai", "nullworks.neuraxis@gmail.com");
 
   html = html.replace(
-    `<button class="btn" onclick="mailtoRoute('${m.state}','${m.score}')">I’M INTERESTED IN ${m.route.toUpperCase()} →</button>`,
-    `<button class="btn" onclick="nextStepRoute('${m.state}','${m.score}','${m.route}')">SEE WHAT NULLWORKS CAN DO NEXT →</button>`,
+    `<button class="btn" onclick="mailtoRoute('\${m.state}','\${m.score}')">I’M INTERESTED IN \${m.route.toUpperCase()} →</button>`,
+    `<button class="btn" onclick="nextStepRoute('\${m.state}','\${m.score}','\${m.route}')">SEE WHAT NULLWORKS CAN DO NEXT →</button>`,
   );
 
   const start = html.indexOf("function mailtoRoute(state,score){");

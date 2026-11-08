@@ -123,7 +123,7 @@ async function deriveVaultKey(pin: string, salt: Uint8Array) {
     {
       name: "PBKDF2",
       hash: "SHA-256",
-      salt,
+      salt: Uint8Array.from(salt),
       iterations: 160000,
     },
     material,

@@ -99,3 +99,13 @@ jobs:
       - run: node scripts/dogfood-browser.mjs
         env:
           DOGFOOD_BASE_URL: http://127.0.0.1:3100
+      - name: Upload browser failure screenshots
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dogfood-browser-failure-evidence
+          path: |
+            dogfood-artifacts/
+            /tmp/dogfood-next.log
+          if-no-files-found: warn
+          retention-days: 14

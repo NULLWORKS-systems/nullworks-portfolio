@@ -23,6 +23,19 @@ async function scenario(name, run) {
     console.error("FAIL", name, error);
   } finally { await context.close(); }
 }
+await scenario("Triage: progression requires an explicit answer", async page => {
+  const response = await page.goto(base + "/triage");
+  assert.equal(response.status(), 200);
+  const next = page.getByRole("button", { name: "Continue" });
+  assert.equal(await next.isDisabled(), true, "Continue must be disabled before an answer");
+  await page.locator("button.choice").first().click();
+  assert.equal(await next.isEnabled(), true, "Continue must enable after an answer");
+  await next.click();
+  await page.getByText("2 of 12").waitFor();
+  await page.getByRole("button", { name: "Back" }).click();
+  await page.getByText("1 of 12").waitFor();
+  assert.equal(await page.locator("button.choice.selected").count(), 1, "Back must preserve selection");
+});
 await scenario("Triage: zero-risk completion, receipt, and reset", async page => {
   const response = await page.goto(base + "/triage");
   assert.equal(response.status(), 200);
@@ -75,4 +88,4 @@ await scenario("Fitness: completed answers produce scored snapshot", async page 
 });
 await browser.close();
 if (failures.length) { console.error(JSON.stringify(failures, null, 2)); process.exitCode = 1; }
-else console.log("DOGFOOD browser suite: 4 scenarios passed");
+else console.log("DOGFOOD browser suite: 5 scenarios passed");

@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test:dogfood": "node --experimental-strip-types --test src/lib/dogfood/scoring.test.ts"
   },
   "dependencies": {
     "ai": "^5.0.0",

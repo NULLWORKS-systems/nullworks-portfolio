@@ -23,3 +23,14 @@ check("F07 unknown excluded",pick({...full,owner:null}),{overall:100,answered:9,
 check("F08 dimension weighted",pick({...full,owner:0}),{overall:80,answered:10,covered:5});
 test("F09 unscored mission and count",()=>assert.deepStrictEqual(scoreFitness({...full,mission:"A",count:2}),scoreFitness({...full,mission:"B",count:11})));
 test("X01 instruments have different authority scoring",()=>assert.notDeepStrictEqual(scoreTriage({...zero,authority:3}),scoreFitness({...full,authority:0})));
+
+
+check("T07 green upper boundary",scoreTriage({...zero,claims:3,timeout:3,evidence:3}),{total:9,band:"GREEN"});
+check("T08 amber upper boundary",scoreTriage({...zero,claims:3,timeout:3,evidence:3,correction:3,completion:3,tests:3}),{total:18,band:"AMBER"});
+check("T09 red upper boundary",scoreTriage({...zero,claims:3,timeout:3,evidence:3,correction:3,completion:3,tests:3,independent:3,urgency:3,unknowns:2}),{total:26,band:"RED"});
+check("T10 critical score threshold",scoreTriage({...zero,claims:3,timeout:3,evidence:3,correction:3,completion:3,tests:3,independent:3,urgency:3,unknowns:3}),{total:27,band:"CRITICAL"});
+check("T11 consequence alone does not override",scoreTriage({...zero,consequence:3}),{total:3,band:"GREEN"});
+check("T12 action alone does not override",scoreTriage({...zero,action:3}),{total:3,band:"GREEN"});
+check("F10 four dimensions, seven known, unknown excluded",pick({...full,owner:null,overlap:null,map:null}),{overall:null,answered:7,covered:3});
+check("F11 incomplete one dimension excluded",pick({...full,owner:null,cost:null}),{overall:100,answered:8,covered:3});
+check("F12 partial dimension averaging",pick({...full,overlap:0,map:100}),{overall:90,answered:10,covered:5});

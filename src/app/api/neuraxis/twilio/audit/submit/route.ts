@@ -67,7 +67,7 @@ export async function POST(request: Request) {
 
   let spoken: string;
   if (sms.ok && receipt.ok) {
-    spoken = `Your provisional audit intake is stored as ${reference}. Twilio accepted the continuation text with status ${sms.status || "queued"}. Open that link to confirm your email or add anything I missed. Human review remains required.`;
+    spoken = `Your provisional audit intake is stored as ${reference}. Twilio accepted the continuation text with status ${("status" in sms ? sms.status : undefined) || "queued"}. Open that link to confirm your email or add anything I missed. Human review remains required.`;
   } else if (sms.ok && !receipt.ok) {
     spoken = `Twilio accepted the continuation text for ${reference}, but I could not confirm that the spoken transcript was stored in the Hive. Open the text link and submit the continuation form so the handoff is preserved. The storage error was ${receipt.error || "unknown"}.`;
   } else if (!sms.ok && receipt.ok) {

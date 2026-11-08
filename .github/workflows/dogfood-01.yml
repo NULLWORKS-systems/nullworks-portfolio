@@ -35,9 +35,7 @@ jobs:
         with:
           node-version: '24'
           cache: npm
-      # Temporary: package-lock.json lacks the declared ai dependency.
-      # Install from manifest without modifying the committed lockfile.
-      - run: npm install --no-package-lock
+      - run: npm ci
       - run: npx tsc --noEmit
   lockfile-audit:
     runs-on: ubuntu-latest

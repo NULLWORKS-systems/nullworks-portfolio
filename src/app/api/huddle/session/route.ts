@@ -159,7 +159,7 @@ async function createRealtimeCall(
       Authorization: `Bearer ${OPENAI_API_KEY}`,
       "Content-Type": multipart.contentType,
     },
-    body: multipart.body,
+    body: Uint8Array.from(multipart.body),
     cache: "no-store",
   });
   return { response, body: await response.text() };

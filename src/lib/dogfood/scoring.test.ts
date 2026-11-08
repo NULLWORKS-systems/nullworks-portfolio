@@ -32,5 +32,5 @@ check("T10 critical score threshold",scoreTriage({...zero,claims:3,timeout:3,evi
 check("T11 consequence alone does not override",scoreTriage({...zero,consequence:3}),{total:3,band:"GREEN"});
 check("T12 action alone does not override",scoreTriage({...zero,action:3}),{total:3,band:"GREEN"});
 check("F10 four dimensions, seven known, unknown excluded",pick({...full,owner:null,overlap:null,map:null}),{overall:null,answered:7,covered:3});
-check("F11 incomplete one dimension excluded",pick({...full,owner:null,cost:null}),{overall:100,answered:8,covered:3});
+check("F11 incomplete two dimensions suppress overall",pick({...full,owner:null,cost:null}),{overall:null,answered:8,covered:3});
 check("F12 partial dimension averaging",pick({...full,overlap:0,map:100}),{overall:90,answered:10,covered:5});

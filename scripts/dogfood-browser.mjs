@@ -93,7 +93,7 @@ await scenario("Legacy triage proxy: local compatibility redirect", async page =
   assert.equal(response.headers()["x-nullworks-triage-compat"], "local-redirect-v1");
   const destination = await page.goto(base + "/api/triage-proxy?campaign=dogfood-01");
   assert.equal(destination.status(), 200);
-  assert.match(page.url(), /\\/triage\\?campaign=dogfood-01$/);
+  assert.equal(new URL(page.url()).pathname + new URL(page.url()).search, "/triage?campaign=dogfood-01");
   await page.getByText("1 of 12").waitFor();
 });
 await browser.close();

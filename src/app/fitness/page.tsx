@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { scoreFitness } from "../../lib/dogfood/fitness";
 
 type Option = { label: string; value: number | null };
 type Question = { id: string; title: string; dimension?: string; options?: Option[] };
@@ -27,10 +28,7 @@ export default function FitnessPage(){
  const [step,setStep]=useState(0);
  const [finished,setFinished]=useState(false);
  const scored=questions.filter(q=>q.dimension);
- const stats=useMemo(()=>dims.map(name=>{const qs=scored.filter(q=>q.dimension===name);const vals=qs.map(q=>answers[q.id]).filter((v):v is number=>typeof v==="number");return {name,count:vals.length,total:qs.length,score:vals.length?Math.round(vals.reduce((a,b)=>a+b,0)/vals.length):null};}),[answers]);
- const answered=stats.reduce((s,d)=>s+d.count,0);
- const valid=stats.filter(d=>d.score!==null);
- const overall=valid.length>=4&&answered>=7?Math.round(valid.reduce((s,d)=>s+(d.score??0),0)/valid.length):null;
+ const {stats,overall}=useMemo(()=>scoreFitness(answers),[answers]);
  const findings=Object.entries(tests).filter(([id])=>typeof answers[id]!=="number"||Number(answers[id])<100).map(([id,description])=>({id,description,unknown:typeof answers[id]!=="number"}));
  const band=(n:number)=>n>=80?"Fewer immediate questions":n>=50?"Worth investigating":"Priority for examination";
  const print=()=>window.print();

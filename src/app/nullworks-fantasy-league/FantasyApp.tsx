@@ -612,10 +612,11 @@ export default function FantasyApp({ view = "dashboard" }: { view?: AppView }) {
   if (!account) return <AuthGate onAuthenticated={setDatabase} />;
   const league = database.leagues.find((candidate) => candidate.id === database.currentLeagueId);
   if (!league) return <EmptyLeague account={account} database={database} setDatabase={setDatabase} />;
-  const myTeam = getMyTeam(league, account.id);
+  const activeLeague = league;
+  const myTeam = getMyTeam(activeLeague, account.id);
 
   function mutateLeague(updater: (league: FantasyLeague) => FantasyLeague) {
-    setDatabase((current) => updateLeague(current, league.id, updater));
+    setDatabase((current) => updateLeague(current, activeLeague.id, updater));
   }
 
   function logout() {

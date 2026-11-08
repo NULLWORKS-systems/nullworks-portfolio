@@ -123,7 +123,7 @@ async function deriveVaultKey(pin: string, salt: Uint8Array) {
     {
       name: "PBKDF2",
       hash: "SHA-256",
-      salt,
+      salt: Uint8Array.from(salt),
       iterations: 160000,
     },
     material,
@@ -208,7 +208,7 @@ async function encryptStory(accountId: string, story: VaultStory, key: CryptoKey
   if (story.audio) {
     audioIv = crypto.getRandomValues(new Uint8Array(12));
     encryptedAudio = await crypto.subtle.encrypt(
-      { name: "AES-GCM", iv: audioIv },
+      { name: "AES-GCM", iv: Uint8Array.from(audioIv) },
       key,
       await story.audio.arrayBuffer(),
     );

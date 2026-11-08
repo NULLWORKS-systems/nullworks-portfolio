@@ -406,7 +406,7 @@ export default function HuddleClient() {
       const stream = event.streams[0] || new MediaStream([event.track]);
       const audio = new Audio();
       audio.autoplay = true;
-      audio.playsInline = true;
+      audio.setAttribute("playsinline", "");
       audio.srcObject = stream;
       aiAudioRef.current = audio;
       void audio.play().catch(() => setStatusText("Tap Enable Audio so the room can speak."));
@@ -537,7 +537,7 @@ export default function HuddleClient() {
 
           const audio = new Audio();
           audio.autoplay = true;
-          audio.playsInline = true;
+          audio.setAttribute("playsinline", "");
           audio.srcObject = guestStream;
           guestAudioRef.current = audio;
           void audio.play().catch(() => setStatusText("Tap Enable Audio to hear the invited guest."));
@@ -673,7 +673,7 @@ export default function HuddleClient() {
         window.clearTimeout(connectionTimer);
         const audio = new Audio();
         audio.autoplay = true;
-        audio.playsInline = true;
+        audio.setAttribute("playsinline", "");
         audio.srcObject = remoteStream;
         remoteAudioRef.current = audio;
         void audio.play().catch(() => setStatusText("Tap Enable Audio to hear the room."));

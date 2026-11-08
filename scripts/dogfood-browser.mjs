@@ -23,6 +23,19 @@ async function scenario(name, run) {
     console.error("FAIL", name, error);
   } finally { await context.close(); }
 }
+await scenario("Triage: progression requires an explicit answer", async page => {
+  const response = await page.goto(base + "/triage");
+  assert.equal(response.status(), 200);
+  const next = page.getByRole("button", { name: "Continue" });
+  assert.equal(await next.isDisabled(), true, "Continue must be disabled before an answer");
+  await page.locator("button.choice").first().click();
+  assert.equal(await next.isEnabled(), true, "Continue must enable after an answer");
+  await next.click();
+  await page.getByText("2 of 12").waitFor();
+  await page.getByRole("button", { name: "Back" }).click();
+  await page.getByText("1 of 12").waitFor();
+  assert.equal(await page.locator("button.choice.selected").count(), 1, "Back must preserve selection");
+});
 await scenario("Triage: zero-risk completion, receipt, and reset", async page => {
   const response = await page.goto(base + "/triage");
   assert.equal(response.status(), 200);
@@ -73,6 +86,46 @@ await scenario("Fitness: completed answers produce scored snapshot", async page 
   await page.getByText("YOUR PRELIMINARY SNAPSHOT").waitFor();
   assert.match(await page.locator("main").innerText(), /\d+ \/ 100/);
 });
+await scenario("Legacy triage proxy: local compatibility redirect", async page => {
+  const response = await page.request.get(base + "/api/triage-proxy?campaign=dogfood-01", { maxRedirects: 0 });
+  assert.equal(response.status(), 307);
+  assert.equal(response.headers().location, "/triage?campaign=dogfood-01");
+  assert.equal(response.headers()["x-nullworks-triage-compat"], "local-redirect-v1");
+  const destination = await page.goto(base + "/api/triage-proxy?campaign=dogfood-01");
+  assert.equal(destination.status(), 200);
+  assert.equal(new URL(page.url()).pathname + new URL(page.url()).search, "/triage?campaign=dogfood-01");
+  await page.getByText("1 of 12").waitFor();
+});
+await scenario("Cross-app: non-mutating resource and POST boundary checks", async page => {
+  for (const path of ["/huddle", "/huddle/stewarts", "/lenderflow-room/lf-9fc9b422d126531eae2f", "/voice-foundry", "/living-signals", "/nullworks-fantasy-league"]) {
+    const response = await page.request.get(base + path);
+    assert.equal(response.status(), 200, path);
+  }
+  const sdk = await page.request.get(base + "/api/neuraxis/voice-web/sdk");
+  assert.equal(sdk.status(), 200);
+  assert.match(await sdk.text(), /function|var|const/);
+  const pdf = await page.request.get(base + "/artifact/cc3-1");
+  assert.equal(pdf.status(), 200);
+  assert.match((await pdf.body()).subarray(0, 8).toString(), /^%PDF-/);
+  for (const path of ["/api/huddle/session", "/api/lenderflow-room/session", "/api/stewart-room/session", "/api/neuraxis/twilio/audit/submit"]) {
+    const response = await page.request.get(base + path);
+    assert.equal(response.status(), 405, path + " GET must not invoke POST");
+  }
+});
+await scenario("Cross-app: browser WebCrypto typed-array compatibility", async page => {
+  await page.goto(base + "/voice-foundry");
+  const result = await page.evaluate(async () => {
+    const text = new TextEncoder().encode("DOGFOOD-01 isolated browser crypto roundtrip");
+    const salt = crypto.getRandomValues(new Uint8Array(16));
+    const material = await crypto.subtle.importKey("raw", new TextEncoder().encode("test-passphrase"), "PBKDF2", false, ["deriveKey"]);
+    const key = await crypto.subtle.deriveKey({ name: "PBKDF2", salt: Uint8Array.from(salt), iterations: 1000, hash: "SHA-256" }, material, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]);
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const ciphertext = await crypto.subtle.encrypt({ name: "AES-GCM", iv: Uint8Array.from(iv) }, key, text);
+    const plaintext = await crypto.subtle.decrypt({ name: "AES-GCM", iv: Uint8Array.from(iv) }, key, ciphertext);
+    return new TextDecoder().decode(plaintext);
+  });
+  assert.equal(result, "DOGFOOD-01 isolated browser crypto roundtrip");
+});
 await browser.close();
 if (failures.length) { console.error(JSON.stringify(failures, null, 2)); process.exitCode = 1; }
-else console.log("DOGFOOD browser suite: 4 scenarios passed");
+else console.log("DOGFOOD browser suite: 8 scenarios passed");

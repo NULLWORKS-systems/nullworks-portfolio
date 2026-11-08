@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
     const pdf = loadArtifact();
     const download = request.nextUrl.searchParams.get("download") === "1";
 
-    return new Response(pdf, {
+    return new Response(Uint8Array.from(pdf), {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",

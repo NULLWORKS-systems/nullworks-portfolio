@@ -431,7 +431,7 @@ export default function StewartRoomClient() {
       const stream = event.streams[0] || new MediaStream([event.track]);
       const audio = new Audio();
       audio.autoplay = true;
-      audio.playsInline = true;
+      audio.setAttribute("playsinline", "");
       audio.srcObject = stream;
       audioElementsRef.current.push(audio);
       void audio.play().catch(() => setStatus("Tap Enable audio so the room can speak."));
@@ -567,7 +567,7 @@ export default function StewartRoomClient() {
         participantAudioRef.current.get(peerId)?.pause();
         const audio = new Audio();
         audio.autoplay = true;
-        audio.playsInline = true;
+        audio.setAttribute("playsinline", "");
         audio.srcObject = participantStream;
         participantAudioRef.current.set(peerId, audio);
         audioElementsRef.current.push(audio);
@@ -650,7 +650,7 @@ export default function StewartRoomClient() {
       window.clearTimeout(connectionTimer);
       const audio = new Audio();
       audio.autoplay = true;
-      audio.playsInline = true;
+      audio.setAttribute("playsinline", "");
       audio.srcObject = remoteStream;
       audioElementsRef.current.push(audio);
       void audio.play().catch(() => setStatus("Tap Enable audio to hear the field scope."));

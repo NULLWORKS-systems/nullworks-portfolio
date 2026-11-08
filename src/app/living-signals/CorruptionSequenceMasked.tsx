@@ -219,7 +219,7 @@ export default function CorruptionSequenceMasked() {
         solidContext.fillStyle = `rgba(${red},${green},${blue},.98)`;
         logoCells.forEach((cell) => {
           if (elapsed < cell.paintAt + SOLIDIFY_DELAY) return;
-          solidContext.fillRect(
+          solidContext?.fillRect(
             cell.targetX - cellSize / 2,
             cell.targetY - cellSize / 2,
             cellSize,

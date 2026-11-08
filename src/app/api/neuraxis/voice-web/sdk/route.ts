@@ -30,7 +30,7 @@ export async function GET(): Promise<Response> {
       throw error;
     });
     const content = await sdkPromise;
-    return new Response(content, {
+    return new Response(Uint8Array.from(content), {
       headers: {
         "content-type": "application/javascript; charset=utf-8",
         "cache-control": "public, max-age=86400, s-maxage=604800, immutable",

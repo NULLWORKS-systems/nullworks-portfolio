@@ -1,20 +1,25 @@
 import { chromium } from "playwright";
 import assert from "node:assert/strict";
+import { mkdir } from "node:fs/promises";
 
 const base = process.env.DOGFOOD_BASE_URL || "http://127.0.0.1:3100";
 const browser = await chromium.launch({ headless: true });
 const failures = [];
+await mkdir("dogfood-artifacts", { recursive: true });
 async function scenario(name, run) {
   const context = await browser.newContext({ acceptDownloads: true });
   const page = await context.newPage();
   const errors = [];
   page.on("pageerror", e => errors.push(e.message));
+  page.on("console", m => { if (m.type() === "error") errors.push("console: " + m.text()); });
   try {
     await run(page);
     assert.deepEqual(errors, [], "Browser runtime exceptions");
     console.log("PASS", name);
   } catch (error) {
-    failures.push({ name, error: String(error) });
+    const filename = "dogfood-artifacts/" + name.toLowerCase().replace(/[^a-z0-9]+/g, "-") + ".png";
+    await page.screenshot({ path: filename, fullPage: true }).catch(() => {});
+    failures.push({ name, error: String(error), screenshot: filename, browserErrors: errors });
     console.error("FAIL", name, error);
   } finally { await context.close(); }
 }

@@ -244,7 +244,7 @@ export default function LiveMicOscilloscope() {
       let rms = 0;
 
       if (live) {
-        analyser.getByteTimeDomainData(data);
+        analyser.getByteTimeDomainData(Uint8Array.from(data));
         let sumSquares = 0;
         for (let index = 0; index < data.length; index += 1) {
           const normalized = (data[index] - 128) / 128;

@@ -208,7 +208,7 @@ async function encryptStory(accountId: string, story: VaultStory, key: CryptoKey
   if (story.audio) {
     audioIv = crypto.getRandomValues(new Uint8Array(12));
     encryptedAudio = await crypto.subtle.encrypt(
-      { name: "AES-GCM", iv: audioIv },
+      { name: "AES-GCM", iv: Uint8Array.from(audioIv) },
       key,
       await story.audio.arrayBuffer(),
     );

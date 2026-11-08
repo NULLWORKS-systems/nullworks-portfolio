@@ -86,6 +86,16 @@ await scenario("Fitness: completed answers produce scored snapshot", async page 
   await page.getByText("YOUR PRELIMINARY SNAPSHOT").waitFor();
   assert.match(await page.locator("main").innerText(), /\d+ \/ 100/);
 });
+await scenario("Legacy triage proxy: local compatibility redirect", async page => {
+  const response = await page.request.get(base + "/api/triage-proxy?campaign=dogfood-01", { maxRedirects: 0 });
+  assert.equal(response.status(), 307);
+  assert.equal(response.headers().location, "/triage?campaign=dogfood-01");
+  assert.equal(response.headers()["x-nullworks-triage-compat"], "local-redirect-v1");
+  const destination = await page.goto(base + "/api/triage-proxy?campaign=dogfood-01");
+  assert.equal(destination.status(), 200);
+  assert.match(page.url(), /\\/triage\\?campaign=dogfood-01$/);
+  await page.getByText("1 of 12").waitFor();
+});
 await browser.close();
 if (failures.length) { console.error(JSON.stringify(failures, null, 2)); process.exitCode = 1; }
-else console.log("DOGFOOD browser suite: 5 scenarios passed");
+else console.log("DOGFOOD browser suite: 6 scenarios passed");

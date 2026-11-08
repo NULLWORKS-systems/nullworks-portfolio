@@ -381,7 +381,7 @@ export default function LenderFlowRoomClient() {
   const playStream = (stream: MediaStream): HTMLAudioElement => {
     const audio = new Audio();
     audio.autoplay = true;
-    audio.playsInline = true;
+    audio.setAttribute("playsinline", "");
     audio.srcObject = stream;
     audioElementsRef.current.push(audio);
     void audio.play().catch(() => setStatus("Tap Enable audio so the room can speak."));

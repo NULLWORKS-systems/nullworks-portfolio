@@ -52,7 +52,6 @@ type PeerConstructor = new (id?: string, options?: Record<string, unknown>) => P
 
 declare global {
   interface Window {
-    Peer?: PeerConstructor;
     webkitAudioContext?: typeof AudioContext;
   }
 }
@@ -65,7 +64,8 @@ let peerScriptPromise: Promise<PeerConstructor> | null = null;
 
 function loadPeerJs(): Promise<PeerConstructor> {
   if (typeof window === "undefined") return Promise.reject(new Error("Browser unavailable."));
-  if (window.Peer) return Promise.resolve(window.Peer);
+  const peerWindow = window as Window & { Peer?: PeerConstructor };
+  if (peerWindow.Peer) return Promise.resolve(peerWindow.Peer);
   if (peerScriptPromise) return peerScriptPromise;
 
   peerScriptPromise = new Promise((resolve, reject) => {
@@ -80,10 +80,10 @@ function loadPeerJs(): Promise<PeerConstructor> {
     }
 
     const finish = () => {
-      if (window.Peer) resolve(window.Peer);
+      if (peerWindow.Peer) resolve(peerWindow.Peer);
       else reject(new Error("Room signaling loaded without a browser client."));
     };
-    if (window.Peer) finish();
+    if (peerWindow.Peer) finish();
     else {
       script.addEventListener("load", finish, { once: true });
       script.addEventListener("error", () => reject(new Error("Could not load room signaling.")), { once: true });

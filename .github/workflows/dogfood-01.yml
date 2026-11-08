@@ -6,6 +6,7 @@ on:
       - 'src/app/triage/page.tsx'
       - 'src/app/fitness/page.tsx'
       - 'package.json'
+      - 'scripts/dogfood-browser.mjs'
       - '.github/workflows/dogfood-01.yml'
   pull_request:
     paths:
@@ -62,3 +63,30 @@ jobs:
           if (missing.length) { console.error('Lockfile drift:\\n' + missing.join('\\n')); process.exitCode = 1; }
           else console.log('Root manifest matches lockfile');
           NODE
+  browser:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm install --no-save --package-lock=false playwright
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build
+      - name: Start local Next.js server
+        run: |
+          npm run start -- --hostname 127.0.0.1 --port 3100 > /tmp/dogfood-next.log 2>&1 &
+          echo $! > /tmp/dogfood-next.pid
+          for i in $(seq 1 60); do
+            if curl --fail --silent http://127.0.0.1:3100/triage > /dev/null; then exit 0; fi
+            sleep 2
+          done
+          cat /tmp/dogfood-next.log
+          exit 1
+      - run: node scripts/dogfood-browser.mjs
+        env:
+          DOGFOOD_BASE_URL: http://127.0.0.1:3100

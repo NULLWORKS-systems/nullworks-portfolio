@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {scoreTriage,TRIAGE_IDS} from "./triage";
-import {scoreFitness,FITNESS_DIMENSIONS} from "./fitness";
+import {scoreTriage,TRIAGE_IDS} from "./triage.ts";
+import {scoreFitness,FITNESS_DIMENSIONS} from "./fitness.ts";
 const zero=Object.fromEntries(TRIAGE_IDS.map(k=>[k,0]));
 const keys=Object.values(FITNESS_DIMENSIONS).flat();
 const full=Object.fromEntries(keys.map(k=>[k,100]));
@@ -17,7 +17,7 @@ check("F01 full 100",pick(full),{overall:100,answered:10,covered:5});
 check("F02 full 0",pick(Object.fromEntries(keys.map(k=>[k,0]))),{overall:0,answered:10,covered:5});
 check("F03 all unknown",pick(Object.fromEntries(keys.map(k=>[k,null]))),{overall:null,answered:0,covered:0});
 check("F04 six known",pick(Object.fromEntries(keys.map((k,i)=>[k,i<6?100:null]))),{overall:null,answered:6,covered:4});
-check("F05 only three dimensions",pick(Object.fromEntries(keys.map(k=>[["overlap","map","swap","outage","rollback","authority","logs"].includes(k)?100:null][0]]))),{overall:null,answered:7,covered:3});
+check("F05 only three dimensions",pick(Object.fromEntries(keys.map(k=>[k,["overlap","map","swap","outage","rollback","authority","logs"].includes(k)?100:null]))),{overall:null,answered:7,covered:3});
 check("F06 seven across four",pick(Object.fromEntries(keys.map(k=>[k,["owner","overlap","map","cost","swap","outage","rollback"].includes(k)?100:null]))),{overall:100,answered:7,covered:4});
 check("F07 unknown excluded",pick({...full,owner:null}),{overall:100,answered:9,covered:4});
 check("F08 dimension weighted",pick({...full,owner:0}),{overall:80,answered:10,covered:5});

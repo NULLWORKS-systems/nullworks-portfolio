@@ -10,7 +10,6 @@
     "test:dogfood": "node --experimental-strip-types --test src/lib/dogfood/scoring.test.ts"
   },
   "dependencies": {
-    "ai": "^5.0.0",
     "lucide-react": "^1.14.0",
     "next": "16.2.4",
     "qrcode.react": "^4.2.0",

@@ -28,8 +28,14 @@ export const projects: AnvilProject[] = [
     accent: "#f6b73c",
     accent2: "#ff6b35",
     texture: "AMPLIFICATION / WIRE / TAPE",
-    facts: ["1982: VEX LIKES SEX", "SINGLE: THURSDAY IS MONDAY", "SINGLE: WELCOME TO THE CABLE", "1978: HARRY PLOPPINS", "Reverse chronology is part of the composition method", "Physical imperfection beats generic polish"],
-    works: ["THURSDAY IS MONDAY", "WELCOME TO THE CABLE", "VEX LIKES SEX", "HARRY PLOPPINS", "AMPLIFIED", "BURNING WIRE"],
+    facts: ["1982: VEX LIKES SEX", "SINGLE: THURSDAY IS MONDAY", "SINGLE: WELCOME TO THE CABLE", "1978: HARRY PLOPPINS", "Reverse chronology is part of the composition method", "Physical imperfection beats generic polish", "2026: CHRISTMAS CAN WAIT"],
+    works: ["THURSDAY IS MONDAY", "WELCOME TO THE CABLE", "VEX LIKES SEX", "HARRY PLOPPINS", "AMPLIFIED", "BURNING WIRE", "CHRISTMAS CAN WAIT"],
+    albums: [
+      { slug: "9-volt", title: "VEX LIKES SEX", note: "1982. Peak-era. Eleven tracks in the intended order." },
+      { slug: "9-volt/christmas-can-wait", title: "CHRISTMAS CAN WAIT", note: "December started in October. Building one song a day." },
+      { slug: "9-volt/thursday-is-monday", title: "THURSDAY IS MONDAY", note: "Single. Thursday is Monday. Tuesday is Friday." },
+      { slug: "9-volt/welcome-to-the-cable", title: "WELCOME TO THE CABLE", note: "Single. Same little hole, different day." },
+    ],
   },
   {
     slug: "blood-pagoda",

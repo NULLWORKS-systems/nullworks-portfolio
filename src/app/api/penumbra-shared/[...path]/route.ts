@@ -83,7 +83,10 @@ async function handler(req: NextRequest, parts: string[]) {
   if (route === 'auth/start' && req.method === 'POST') {
     const email = normalizedEmail(data?.email);
     if (!allowed(email)) return reply({ error: 'Email is not approved for this workroom' }, 403);
-    const redirect = req.nextUrl.origin + '/penumbra-workroom/shared';
+    const join = data?.join;
+    const invitation = isUuid(join?.room) && inviteTokenValid(join?.token)
+      ? '?room=' + encodeURIComponent(join.room) + '&invite=' + encodeURIComponent(join.token) : '';
+    const redirect = req.nextUrl.origin + '/penumbra-workroom/shared' + invitation;
     const r = await authFetch('otp?redirect_to=' + encodeURIComponent(redirect), {
       method: 'POST', body: JSON.stringify({ email, create_user: true })
     });

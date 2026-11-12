@@ -26,7 +26,7 @@ export default function SharedRoomClient() {
   const [rooms,setRooms] = useState<Room[]>([]);
   const [active,setActive] = useState<Room|null>(null);
   const [events,setEvents] = useState<Event[]>([]);
-  const [newRoom,setNewRoom] = useState('Jason + Mason + ChatGPT');
+  const [newRoom,setNewRoom] = useState('Jason + Mason + ChatGPT + Grok');
   const [message,setMessage] = useState('');
   const [inviteEmail,setInviteEmail] = useState('');
   const [inviteUrl,setInviteUrl] = useState('');
@@ -109,11 +109,11 @@ export default function SharedRoomClient() {
   function sendMessage(e:FormEvent){e.preventDefault();if(!active||!message.trim())return;const content=message;void run(async()=>{
     await api(`/rooms/${active.id}/events`,'POST',{clientEventId:crypto.randomUUID(),content});setMessage('');await loadEvents(active.id);
   });}
-  function requestAI(){ if(!active)return;
+  function requestAI(worker:'chatgpt'|'grok'){ if(!active)return;
     const human = [...events].reverse().find(e=>e.actor_type==='human');
     if(!human){setError('Send a human message first.');return;}
-    setAiBusy(true);setError('');setNotice('ChatGPT response requested by a room member.');
-    api(`/rooms/${active.id}/ai`,'POST',{clientEventId:crypto.randomUUID(),parentEventId:human.id})
+    setAiBusy(true);setError('');setNotice(`${worker==='chatgpt'?'ChatGPT':'Grok'} response requested by a room member.`);
+    api(`/rooms/${active.id}/ai`,'POST',{clientEventId:crypto.randomUUID(),parentEventId:human.id,worker})
       .then(()=>loadEvents(active.id)).catch(e=>setError((e as Error).message))
       .finally(()=>{setAiBusy(false);setNotice('');});
   }
@@ -124,8 +124,8 @@ export default function SharedRoomClient() {
   });}
   const owner=!!user&&!!active&&active.owner_user_id===user.id;
   return <main className="nw-shared">
-    <header className="nw-shared-header"><div><span className="eyebrow">NULLWORKS / PENUMBRA</span><h1>Shared workroom</h1><p>Mason · Jason · ChatGPT</p></div>{user&&<button type="button" onClick={signOut}>Sign out</button>}</header>
-    <div className="nw-shared-note">Private, member-only text room. ChatGPT responds only when someone selects <b>Ask ChatGPT</b>. This room does not automatically expose the Hive.</div>
+    <header className="nw-shared-header"><div><span className="eyebrow">NULLWORKS / PENUMBRA</span><h1>Shared workroom</h1><p>Mason · Jason · ChatGPT · Grok</p></div>{user&&<button type="button" onClick={signOut}>Sign out</button>}</header>
+    <div className="nw-shared-note">Private, member-only text room. ChatGPT or Grok respond only when a room member explicitly requests a reply. This room does not automatically expose the Hive.</div>
     {initializing&&<p>Checking your session…</p>}
     {!initializing&&!user&&<section className="nw-panel nw-auth"><h2>Sign in by email</h2><p>Only approved participant email addresses can sign in. Use the email magic link or an included verification code. No password needed.</p>
       <form onSubmit={submitAuth} className="nw-stack"><label>Email <input type="email" required autoComplete="email" value={email} disabled={codeSent} onChange={e=>setEmail(e.target.value)}/></label>
@@ -146,7 +146,7 @@ export default function SharedRoomClient() {
           <p>{event.content}</p></article>)}<div ref={bottom}/></div>
         {unread>0&&<p className="nw-small">{unread} newer message(s)</p>}
         <form className="nw-compose" onSubmit={sendMessage}><label htmlFor="nw-msg">Message</label><textarea id="nw-msg" value={message} onChange={e=>setMessage(e.target.value)} placeholder="Add a message visible to both humans…" maxLength={4000} rows={3} required />
-          <div className="nw-actions"><button className="nw-primary" disabled={busy||!message.trim()}>Post message</button><button type="button" disabled={aiBusy||busy||!events.some(e=>e.actor_type==='human')} onClick={requestAI}>{aiBusy?'ChatGPT responding…':'Ask ChatGPT'}</button></div></form></>}
+          <div className="nw-actions"><button className="nw-primary" disabled={busy||!message.trim()}>Post message</button><button type="button" disabled={aiBusy||busy||!events.some(e=>e.actor_type==='human')} onClick={()=>requestAI('chatgpt')}>{aiBusy?'Worker responding…':'Ask ChatGPT'}</button><button type="button" disabled={aiBusy||busy||!events.some(e=>e.actor_type==='human')} onClick={()=>requestAI('grok')}>{aiBusy?'Worker responding…':'Ask Grok'}</button></div></form></>}
       {!active&&<p>Select or create a private room to begin.</p>}
     </section></div>}
     {notice&&<p className="nw-notice" role="status">{notice}</p>}{error&&<p className="nw-error" role="alert">{error}</p>}

@@ -44,7 +44,7 @@ export async function fetchHiveEvidence(path: string): Promise<HiveEvidence> {
   if (!res.ok) throw new Error(res.status === 401 || res.status === 403 ? 'HIVE_ACCESS_REJECTED' : 'HIVE_READ_FAILED');
   const record = await res.json();
   if (!record || Array.isArray(record) || record.type !== 'file' || record.encoding !== 'base64' ||
-      typeof record.content !== 'string' || typeof record.sha !== 'string' ||
+      typeof record.content !== 'string' || record.content.length > 18000 || typeof record.sha !== 'string' ||
       !/^[a-f0-9]{40}$/i.test(record.sha) || record.path !== path) throw new Error('HIVE_SOURCE_INVALID');
   if (typeof record.size !== 'number' || record.size > 12000) throw new Error('HIVE_SOURCE_TOO_LARGE');
 

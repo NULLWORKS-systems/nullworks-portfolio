@@ -67,6 +67,10 @@ async function supabase(
   if (!res.ok) {
     const detail = typeof parsed?.message === 'string' ? parsed.message : typeof parsed?.msg === 'string' ? parsed.msg : '';
     // Do not reflect internal provider or credential errors to the browser.
+    // Supabase's built-in email sender has a project-wide quota; do not disguise 429 as a database outage.
+    if (res.status === 429 && path.startsWith('/auth/v1/otp')) {
+      throw new ApiError(429,'Supabase email sending limit reached. Check the newest sign-in email already received; request another only after the quota resets.');
+    }
     throw new ApiError(res.status === 401 || res.status === 403 ? 403 : res.status >= 500 ? 502 : res.status,
       res.status === 409 ? 'Duplicate event' : detail && res.status === 400 ? 'Invalid request' : 'Database or authentication request failed');
   }

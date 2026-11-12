@@ -65,7 +65,7 @@ export default function SharedRoomClient() {
     mounted.current=true;
     const params = new URLSearchParams(location.search);
     const room=params.get('room'),token=params.get('invite');
-    if(room && token){setJoin({room,token});history.replaceState(null,'',location.pathname);}
+    if(room && token){setJoin({room,token});history.replaceState(null,'',location.pathname+location.hash);}
     (async()=>{
       const hash = new URLSearchParams(location.hash.replace(/^#/,''));
       const accessToken=hash.get('access_token'),refreshToken=hash.get('refresh_token');

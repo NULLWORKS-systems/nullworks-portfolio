@@ -6,6 +6,8 @@ type User = { id:string; email:string; name:string };
 type Room = { id:string; title:string; owner_user_id:string; created_at:string };
 type Event = { id:string; room_id:string; actor_label:string; actor_type:'human'|'ai'|'system'; content:string; created_at:string; model:string|null; parent_event_id:string|null };
 type JsonResponse = { error?:string; [key:string]:any };
+type HiveSource = {path:string;sha:string;content:string};
+type HiveStarter = {label:string;path:string};
 const ROOT = '/api/penumbra-shared';
 
 async function api(path:string, method:'GET'|'POST'='GET', body?:unknown):Promise<JsonResponse> {
@@ -36,6 +38,9 @@ export default function SharedRoomClient() {
   const [aiBusy,setAiBusy] = useState(false);
   const [join,setJoin] = useState<{room:string;token:string}|null>(null);
   const [unread,setUnread] = useState(0);
+  const [hivePath,setHivePath] = useState('hive/current/2026-09-05_penumbra_handoff.yaml');
+  const [hiveStarters,setHiveStarters] = useState<HiveStarter[]>([]);
+  const [hivePreview,setHivePreview] = useState<HiveSource|null>(null);
   const bottom = useRef<HTMLDivElement|null>(null);
   const mounted = useRef(false);
   const activeRoomId = useRef<string|null>(null);
@@ -86,6 +91,10 @@ export default function SharedRoomClient() {
     setUnread(0);
     setInviteUrl('');
     setInviteEmail('');
+    setHivePreview(null);
+    if(user && active.owner_user_id===user.id){
+      void api(`/rooms/${active.id}/hive`).then(r=>setHiveStarters(Array.isArray(r.starters)?r.starters as HiveStarter[]:[])).catch(()=>setHiveStarters([]));
+    }
     void loadEvents(active.id);
     const timer = window.setInterval(()=>{if(document.visibilityState==='visible') void loadEvents(active.id,true);},3500);
     return ()=>window.clearInterval(timer);
@@ -122,10 +131,23 @@ export default function SharedRoomClient() {
     setInviteUrl(String(res.inviteUrl||''));
     setNotice('Private invitation prepared, NOT sent. Share it only after authorizing recipient and channel.');
   });}
+  function previewHive(){if(!active)return;void run(async()=>{
+    const res=await api(`/rooms/${active.id}/hive`,'POST',{action:'preview',path:hivePath.trim()});
+    setHivePreview(res.source as HiveSource);
+    setNotice('Private preview only. The document has NOT been shared with room members or AI providers.');
+  });}
+  function shareHive(){if(!active||!hivePreview)return;void run(async()=>{
+    const res=await api(`/rooms/${active.id}/hive`,'POST',{
+      action:'share',path:hivePreview.path,sha:hivePreview.sha,clientEventId:crypto.randomUUID(),
+    });
+    await loadEvents(active.id);
+    setNotice(res.duplicate?'This exact Hive revision is already attached.':'Approved Hive evidence attached to the shared room. ChatGPT and Grok can now cite it on the next human-triggered reply.');
+    setHivePreview(null);
+  });}
   const owner=!!user&&!!active&&active.owner_user_id===user.id;
   return <main className="nw-shared">
     <header className="nw-shared-header"><div><span className="eyebrow">NULLWORKS / PENUMBRA</span><h1>Shared workroom</h1><p>Mason · Jason · ChatGPT · Grok</p></div>{user&&<button type="button" onClick={signOut}>Sign out</button>}</header>
-    <div className="nw-shared-note">Private, member-only text room. ChatGPT or Grok respond only when a room member explicitly requests a reply. This room does not automatically expose the Hive.</div>
+    <div className="nw-shared-note">Private, member-only text room. ChatGPT and Grok respond only when requested. The owner can explicitly attach sourced, read-only Hive evidence; private repository credentials never reach the AI seats or participants.</div>
     {initializing&&<p>Checking your session…</p>}
     {!initializing&&!user&&<section className="nw-panel nw-auth"><h2>Sign in by email</h2><p>Only approved participant email addresses can sign in. Use the email magic link or an included verification code. No password needed.</p>
       <form onSubmit={submitAuth} className="nw-stack"><label>Email <input type="email" required autoComplete="email" value={email} disabled={codeSent} onChange={e=>setEmail(e.target.value)}/></label>
@@ -136,12 +158,28 @@ export default function SharedRoomClient() {
       {rooms.map(room=><button type="button" key={room.id} className={'nw-room-choice '+(room.id===active?.id?'selected':'')} onClick={()=>setActive(room)}>{room.title}</button>)}
       <form onSubmit={createRoom} className="nw-stack"><label>Create private room <input value={newRoom} maxLength={120} onChange={e=>setNewRoom(e.target.value)}/></label><button disabled={busy}>Create room</button></form>
       {join&&<div className="nw-pending"><b>Pending invitation</b><p>An invite link was opened for this account.</p><button disabled={busy} onClick={joinRoom}>Accept invitation</button></div>}
+      {owner&&active&&<section className="nw-stack nw-hive">
+        <h3>Private Hive Brain</h3>
+        <p className="nw-small">Owner-only retrieval. Preview first; nothing leaves the private Hive until you expressly share the selected excerpt with this room.</p>
+        {hiveStarters.length>0&&<label>Suggested canonical source
+          <select value={hiveStarters.some(p=>p.path===hivePath)?hivePath:''} onChange={e=>{setHivePath(e.target.value);setHivePreview(null);}}>
+            <option value="">Custom exact path</option>{hiveStarters.map(s=><option key={s.path} value={s.path}>{s.label}</option>)}
+          </select>
+        </label>}
+        <label>Exact Hive path <input value={hivePath} onChange={e=>{setHivePath(e.target.value);setHivePreview(null);}} spellCheck={false}/></label>
+        <button type="button" disabled={busy||!hivePath.trim()} onClick={previewHive}>Preview private Hive source</button>
+        {hivePreview&&<div className="nw-hive-preview"><div className="nw-small"><b>PREVIEW ONLY</b> · SHA {hivePreview.sha.slice(0,12)} · {hivePreview.path}</div>
+          <textarea readOnly rows={9} value={hivePreview.content} aria-label="Private Hive source preview"/>
+          <p className="nw-small">Sharing makes this exact content permanently visible to current/future room members and available in subsequent ChatGPT/Grok prompts sent to their AI provider. Review it for sensitive material before approving.</p>
+          <button type="button" className="nw-primary" disabled={busy} onClick={shareHive}>Approve sharing this evidence with room</button>
+        </div>}
+      </section>}
       {owner&&<form onSubmit={createInvite} className="nw-stack nw-invite"><h3>Invite Jason</h3><label>Approved email <input type="email" required value={inviteEmail} onChange={e=>setInviteEmail(e.target.value)}/></label><button disabled={busy}>Prepare invite link</button>
         {inviteUrl&&<><textarea readOnly rows={3} value={inviteUrl} aria-label="Private invitation link"/><button type="button" onClick={()=>navigator.clipboard.writeText(inviteUrl)}>Copy link</button><small>Not sent. Single-use, expires in 24 hours.</small></>}</form>}
     </aside><section className="nw-panel nw-room"><div className="nw-room-top"><div><h2>{active?.title||'Select a room'}</h2><div className="nw-small">{active?'Messages are stored in the shared database':'Create a room to start'}</div></div><span className="nw-presence">● Signed-in room</span></div>
       {active&&<><div className="nw-thread" role="log" aria-live="polite" onScroll={()=>setUnread(0)}>
         {events.length===0&&<p className="nw-empty">No messages yet. Say hello.</p>}
-        {events.map(event=><article key={event.id} className={'nw-entry '+(event.actor_type==='ai'?'nw-ai':'')}>
+        {events.map(event=><article key={event.id} className={'nw-entry '+(event.actor_type==='ai'?'nw-ai':event.actor_type==='system'?'nw-hive-entry':'')}>
           <div className="nw-meta"><b>{event.actor_label}</b>{event.actor_type==='ai'&&<span>AI · {event.model||'model unspecified'}</span>}<time dateTime={event.created_at}>{new Date(event.created_at).toLocaleString()}</time></div>
           <p>{event.content}</p></article>)}<div ref={bottom}/></div>
         {unread>0&&<p className="nw-small">{unread} newer message(s)</p>}

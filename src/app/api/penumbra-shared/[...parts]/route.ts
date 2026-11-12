@@ -131,8 +131,31 @@ async function handle(req: NextRequest, parts: string[], method: 'GET'|'POST'): 
     const body = await readBody(req);
     const email = normalizedEmail(body.email);
     if (!allowed(email)) throw new ApiError(403,'Email not approved for this private workroom');
-    await supabase('/auth/v1/otp','POST',{email,create_user:true});
-    return json({ok:true,message:'Check your email for your sign-in code'});
+    const redirect = new URL('/penumbra-workroom/shared',req.url);
+    const pending = body.join;
+    if (pending && typeof pending === 'object' && !Array.isArray(pending)) {
+      const join = pending as Record<string,unknown>;
+      if (isUuid(join.room) && inviteTokenValid(join.token)) {
+        redirect.searchParams.set('room',join.room);
+        redirect.searchParams.set('invite',join.token);
+      }
+    }
+    await supabase('/auth/v1/otp?redirect_to='+encodeURIComponent(redirect.toString()),'POST',{email,create_user:true});
+    return json({ok:true,message:'Check your email for the magic link or sign-in code'});
+  }
+  if (method === 'POST' && route === 'auth/session') {
+    const body = await readBody(req);
+    const accessToken = body.accessToken, refreshToken = body.refreshToken;
+    if (typeof accessToken !== 'string' || typeof refreshToken !== 'string' ||
+        !accessToken || !refreshToken || accessToken.length > 16000 || refreshToken.length > 1000) {
+      throw new ApiError(400,'Invalid sign-in session');
+    }
+    const user = await supabase('/auth/v1/user','GET',undefined,{access:accessToken}) as User;
+    if (!isUuid(user?.id) || !allowed(user.email)) throw new ApiError(403,'Account not approved');
+    const tokens: Tokens = {access_token:accessToken,refresh_token:refreshToken,expires_in:3600,user};
+    const res = json({ok:true,user:{id:user.id,email:user.email,name:nameFor(user.email)}});
+    setSessionCookies(res,tokens);
+    return res;
   }
   if (method === 'POST' && route === 'auth/verify') {
     const body = await readBody(req);

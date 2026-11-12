@@ -98,7 +98,7 @@ export default function SharedRoomClient() {
     void loadEvents(active.id);
     const timer = window.setInterval(()=>{if(document.visibilityState==='visible') void loadEvents(active.id,true);},3500);
     return ()=>window.clearInterval(timer);
-  },[active?.id,loadEvents]);
+  },[active?.id,user?.id,loadEvents]);
   useEffect(()=>{ if(!events.length) return; bottom.current?.scrollIntoView({behavior:'smooth',block:'end'}); },[events.length,active?.id]);
 
   async function run(task:()=>Promise<void>) {

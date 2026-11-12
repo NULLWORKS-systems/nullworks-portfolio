@@ -66,7 +66,17 @@ export default function SharedRoomClient() {
     const params = new URLSearchParams(location.search);
     const room=params.get('room'),token=params.get('invite');
     if(room && token){setJoin({room,token});history.replaceState(null,'',location.pathname);}
-    api('/auth/me').then(r=>{setUser(r.user as User);return loadRooms();}).catch(()=>{}).finally(()=>setInitializing(false));
+    (async()=>{
+      const hash = new URLSearchParams(location.hash.replace(/^#/,''));
+      const accessToken=hash.get('access_token'),refreshToken=hash.get('refresh_token');
+      if(accessToken&&refreshToken){
+        history.replaceState(null,'',location.pathname);
+        await api('/auth/session','POST',{accessToken,refreshToken});
+      }
+      const r=await api('/auth/me');
+      setUser(r.user as User);
+      await loadRooms();
+    })().catch((e)=>{if(location.hash.includes('error='))setError('The sign-in link expired or was rejected. Request another one.');}).finally(()=>setInitializing(false));
   },[loadRooms]);
   useEffect(()=>{
     if(!active) return;
@@ -89,7 +99,7 @@ export default function SharedRoomClient() {
   function submitAuth(e:FormEvent) {
     e.preventDefault();
     void run(async()=>{
-      if(!codeSent){await api('/auth/start','POST',{email});setCodeSent(true);setNotice('A sign-in code was requested. Check your email.');}
+      if(!codeSent){await api('/auth/start','POST',{email});setCodeSent(true);setNotice('Sign-in email requested. Open its magic link, or enter the code if one is included.');}
       else {const r=await api('/auth/verify','POST',{email,token:otp});setUser(r.user as User);await loadRooms();setNotice('Signed in.');}
     });
   }
@@ -117,10 +127,10 @@ export default function SharedRoomClient() {
     <header className="nw-shared-header"><div><span className="eyebrow">NULLWORKS / PENUMBRA</span><h1>Shared workroom</h1><p>Mason · Jason · ChatGPT</p></div>{user&&<button type="button" onClick={signOut}>Sign out</button>}</header>
     <div className="nw-shared-note">Private, member-only text room. ChatGPT responds only when someone selects <b>Ask ChatGPT</b>. This room does not automatically expose the Hive.</div>
     {initializing&&<p>Checking your session…</p>}
-    {!initializing&&!user&&<section className="nw-panel nw-auth"><h2>Sign in with an email code</h2><p>Only approved participant email addresses can sign in. No password needed.</p>
+    {!initializing&&!user&&<section className="nw-panel nw-auth"><h2>Sign in by email</h2><p>Only approved participant email addresses can sign in. Use the email magic link or an included verification code. No password needed.</p>
       <form onSubmit={submitAuth} className="nw-stack"><label>Email <input type="email" required autoComplete="email" value={email} disabled={codeSent} onChange={e=>setEmail(e.target.value)}/></label>
       {codeSent&&<label>Code from email <input inputMode="numeric" autoComplete="one-time-code" minLength={6} maxLength={8} value={otp} onChange={e=>setOtp(e.target.value)} required /></label>}
-      <button className="nw-primary" disabled={busy}>{codeSent?'Verify and enter':'Send sign-in code'}</button>
+      <button className="nw-primary" disabled={busy}>{codeSent?'Verify and enter' :'Send sign-in email'}</button>
       {codeSent&&<button type="button" onClick={()=>{setCodeSent(false);setOtp('');}}>Change email</button>}</form></section>}
     {user&&<div className="nw-layout"><aside className="nw-panel nw-sidebar"><div className="nw-small">Signed in as <b>{user.name}</b></div><h2>Rooms</h2>
       {rooms.map(room=><button type="button" key={room.id} className={'nw-room-choice '+(room.id===active?.id?'selected':'')} onClick={()=>setActive(room)}>{room.title}</button>)}

@@ -99,7 +99,7 @@ export default function SharedRoomClient() {
   function submitAuth(e:FormEvent) {
     e.preventDefault();
     void run(async()=>{
-      if(!codeSent){await api('/auth/start','POST',{email});setCodeSent(true);setNotice('Sign-in email requested. Open its magic link, or enter the code if one is included.');}
+      if(!codeSent){await api('/auth/start','POST',{email,join});setCodeSent(true);setNotice('Sign-in email requested. Open its magic link, or enter the code if one is included.');}
       else {const r=await api('/auth/verify','POST',{email,token:otp});setUser(r.user as User);await loadRooms();setNotice('Signed in.');}
     });
   }

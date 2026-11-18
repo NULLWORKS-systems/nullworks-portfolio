@@ -516,7 +516,7 @@ async function handle(req: NextRequest, parts: string[], method: 'GET'|'POST'): 
     if(alreadyAnswered)return signedResponse(session,{event:alreadyAnswered,duplicate:true});
     let reviewEventId:string|undefined;
     if(mode==='verify'){
-      reviewEventId=body.reviewEventId;
+      reviewEventId=typeof body.reviewEventId==='string'?body.reviewEventId:undefined;
       const target=thread.find(e=>e.id===reviewEventId&&e.parent_event_id===parentId&&e.actor_type==='ai');
       if(!isUuid(reviewEventId)||!target)throw new ApiError(400,'Select an existing answer for verification');
       if(target.provider===provider || (worker==='grok'&&target.provider==='xai'))

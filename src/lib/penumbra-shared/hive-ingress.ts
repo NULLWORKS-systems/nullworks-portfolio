@@ -41,7 +41,11 @@ export async function fetchHiveEvidence(path: string): Promise<HiveEvidence> {
       'User-Agent': 'NULLWORKS-PENUMBRA-ReadOnly',
     },
   });
-  if (!res.ok) throw new Error(res.status === 401 || res.status === 403 ? 'HIVE_ACCESS_REJECTED' : 'HIVE_READ_FAILED');
+  // Preserve only status category, never GitHub response text, token, or request headers.
+  if (!res.ok) {
+    if ([401,403,404,429].includes(res.status)) throw new Error('HIVE_GITHUB_HTTP_' + res.status);
+    throw new Error('HIVE_GITHUB_UPSTREAM_ERROR');
+  }
   const record = await res.json();
   if (!record || Array.isArray(record) || record.type !== 'file' || record.encoding !== 'base64' ||
       typeof record.content !== 'string' || record.content.length > 18000 || typeof record.sha !== 'string' ||

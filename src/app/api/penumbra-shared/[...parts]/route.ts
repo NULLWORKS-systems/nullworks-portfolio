@@ -260,8 +260,14 @@ async function handle(req: NextRequest, parts: string[], method: 'GET'|'POST'): 
     catch(e) {
       const reason = e instanceof Error ? e.message : '';
       if (reason === 'HIVE_SOURCE_TOO_LARGE') throw new ApiError(413,'Hive source exceeds the 12 KB sharing limit. Select a smaller canonical packet.');
-      if (reason === 'HIVE_AUTH_NOT_CONFIGURED' || reason === 'HIVE_ACCESS_REJECTED') throw new ApiError(503,'Private Hive is not authorized for PENUMBRA on this deployment');
-      throw new ApiError(502,'Private Hive retrieval failed. No source was shared.');
+      // Endpoint is already restricted to Mason (owner and allowlisted email).
+      // Return an actionable code, without credentials, protected content, or GitHub response bodies.
+      if (reason === 'HIVE_AUTH_NOT_CONFIGURED') throw new ApiError(503,'HIVE_TOKEN_MISSING: Production server has no Hive token. No source was shared.');
+      if (reason === 'HIVE_GITHUB_HTTP_401') throw new ApiError(503,'HIVE_GITHUB_401: GitHub rejected the token. Check whether it is valid, unexpired, and copied correctly.');
+      if (reason === 'HIVE_GITHUB_HTTP_403') throw new ApiError(503,'HIVE_GITHUB_403: GitHub denied the token. Check organization approval/SSO and repository Contents: Read permission.');
+      if (reason === 'HIVE_GITHUB_HTTP_404') throw new ApiError(502,'HIVE_GITHUB_404: GitHub could not expose the requested file. Check selected repository permission and exact path.');
+      if (reason === 'HIVE_GITHUB_HTTP_429') throw new ApiError(503,'HIVE_GITHUB_429: GitHub API rate limit reached. No source was shared.');
+      throw new ApiError(502,'HIVE_UPSTREAM_ERROR: Private Hive retrieval failed. No source was shared.');
     }
     if (action === 'preview') return signedResponse(session,{source:evidence});
     const expectedSha = body.sha;

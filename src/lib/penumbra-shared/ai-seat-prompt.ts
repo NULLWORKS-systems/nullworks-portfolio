@@ -80,12 +80,11 @@ the limitation without mimicking another participant.`;
  * worker. No retry is made: the authorized request is still consumed. */
 export function foreignSeatClaim(worker:SeatWorker, content:string):boolean {
   const other=OTHERS[worker];
-  const safe=other.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
-  const startsWithOther=new RegExp('^\\s*(?:\\*\\*)?\\['+safe+'\\]', 'i');
-  const announcesOther=new RegExp(
-    '(?:^|\\n)\\s*(?:\\*\\*)?(?:I am|I\\'m|This is|As)\\s+'+safe+'\\b', 'i'
-  );
-  const otherResponse=new RegExp('^\\s*(?:\\*\\*)?'+safe+'\\s+response\\b','i');
-  return startsWithOther.test(content) || announcesOther.test(content.slice(0,1000)) ||
+  const startsWithOther=worker==='chatgpt'
+    ? /^\s*(?:\*\*)?\[Grok\]/i
+    : /^\s*(?:\*\*)?\[ChatGPT\]/i;
+  const saysOther=new RegExp("\\b(?:I am|I'm|This is|As)\\s+"+other+"\\b","i");
+  const otherResponse=new RegExp("^\\s*(?:\\*\\*)?"+other+"\\s+response\\b","i");
+  return startsWithOther.test(content) || saysOther.test(content.slice(0,1100)) ||
     otherResponse.test(content);
 }

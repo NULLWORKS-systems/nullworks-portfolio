@@ -44,7 +44,7 @@ export function buildModePrompt(input:{
       '\nEND FULL TARGET ANSWER\n'+
       'Check factual support, internal logic, omissions and unsupported assertions against the '+
       'original human question and owner-approved evidence. Separate CONFIRMED, UNCERTAIN, '+
-      'and CORRECTIONS. Do not claim external verification or direct Hive access.');
+      'and CORRECTIONS. Do not claim external verification or direct Hive access.'});
   }
   return messages;
 }

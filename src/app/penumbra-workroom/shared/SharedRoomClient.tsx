@@ -153,21 +153,6 @@ export default function SharedRoomClient() {
       .then(()=>loadEvents(active.id)).catch(e=>setError((e as Error).message))
       .finally(()=>{void reloadPilot(active.id).catch(()=>{});setAiBusy(false);setNotice('');});
   }
-  function requestGrokRecovery(parentId:string){
-    if(!active||!user||active.owner_user_id!==user.id) return;
-    if(aiBusy||busy) return;
-    setAiBusy(true);setError('');setNotice('One-time Grok recovery test submitted by Human Authority.');
-    api(`/rooms/${active.id}/ai`,'POST',{
-      clientEventId:crypto.randomUUID(),parentEventId:parentId,
-      worker:'grok',recoveryTest:true,
-    })
-      .then(async()=>{
-        await loadEvents(active.id);
-        setNotice('Grok recovery reply was saved. Check the room history, then refresh to verify persistence.');
-      })
-      .catch(e=>{setError((e as Error).message);setNotice('Grok test did not complete; no automatic retry will occur.');})
-      .finally(()=>setAiBusy(false));
-  }
   function createInvite(e:FormEvent){e.preventDefault();if(!active)return;void run(async()=>{
     const res=await api(`/rooms/${active.id}/invite`,'POST',{email:inviteEmail});
     setInviteEmail('');
@@ -187,12 +172,6 @@ export default function SharedRoomClient() {
     setHivePreview(null);
   });}
   const owner=!!user&&!!active&&active.owner_user_id===user.id;
-  // Target a human message with a persisted ChatGPT reply and no Grok reply.
-  // This is intentionally not the most recent human message by default.
-  const recoveryParent=[...events].reverse().find(e=>
-    e.actor_type==='human' &&
-    events.some(a=>a.actor_type==='ai' && a.actor_label==='ChatGPT' && a.parent_event_id===e.id) &&
-    !events.some(a=>a.actor_type==='ai' && a.actor_label==='Grok' && a.parent_event_id===e.id));
   return <main className="nw-shared">
     <header className="nw-shared-header"><div><span className="eyebrow">NULLWORKS / PENUMBRA</span><h1>Shared workroom</h1><p>Mason · Jason · ChatGPT · Grok</p></div><div className="nw-header-actions">{user?.isOperator&&<a className="nw-access-link" href="/penumbra-workroom/access">Access Portal</a>}{user&&<button type="button" onClick={signOut}>Sign out</button>}</div></header>
     <div className="nw-shared-note">Private, member-only text room. ChatGPT and Grok respond only when requested. The owner can explicitly attach sourced, read-only Hive evidence; private repository credentials never reach the AI seats or participants.</div>
@@ -242,14 +221,7 @@ export default function SharedRoomClient() {
         {unread>0&&<p className="nw-small">{unread} newer message(s)</p>}
         <form className="nw-compose" onSubmit={sendMessage}><label htmlFor="nw-msg">Message</label><textarea id="nw-msg" value={message} onChange={e=>setMessage(e.target.value)} placeholder="Add a message visible to both humans…" maxLength={4000} rows={3} required />
           <div className="nw-actions"><button className="nw-primary" disabled={busy||!message.trim()}>Post message</button><button type="button" disabled={aiBusy||busy||!pilot||pilot.chatgpt.remaining===0||!events.some(e=>e.actor_type==='human')} onClick={()=>requestAI('chatgpt')}>{aiBusy?'Worker responding…':'Ask ChatGPT'}</button><button type="button" disabled={aiBusy||busy||!pilot||pilot.grok.remaining===0||!events.some(e=>e.actor_type==='human')} onClick={()=>requestAI('grok')}>{aiBusy?'Worker responding…':'Ask Grok'}</button></div></form>
-        {false&&owner&&recoveryParent&&<section className="nw-stack nw-hive" aria-label="One-time Grok recovery test">
-          <h3>One-time Grok recovery test</h3>
-          <p className="nw-small">Human Authority approved exactly one additional, short Grok call to answer a human message ChatGPT already answered. This test is separate from the exhausted four-call allowance. It cannot share Hive files, invite anyone, or retry automatically.</p>
-          <p className="nw-small">Selected earlier human message: <b>{recoveryParent.content.slice(0,180)}</b></p>
-          <button type="button" disabled={busy||aiBusy} onClick={()=>requestGrokRecovery(recoveryParent.id)}>
-            {aiBusy?'Worker responding…':'Run one-time Grok recovery test (1 call)'}
-          </button>
-        </section>}</>}
+</>}
       {!active&&<p>Select or create a private room to begin.</p>}
     </section></div>}
     {notice&&<p className="nw-notice" role="status">{notice}</p>}{error&&<p className="nw-error" role="alert">{error}</p>}

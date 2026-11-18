@@ -1,6 +1,7 @@
 import { createHash, randomBytes } from 'node:crypto';
 import { fetchHiveEvidence, HIVE_STARTERS, validHivePath } from '@/lib/penumbra-shared/hive-ingress';
-import { buildSeatPrompt, foreignSeatClaim } from '@/lib/penumbra-shared/ai-seat-prompt';
+import { foreignSeatClaim } from '@/lib/penumbra-shared/ai-seat-prompt';
+import { buildModePrompt, independentEligible, outputLimit, validDepth, validMode, type WorkMode, type Depth } from '@/lib/penumbra-shared/ai-modes';
 import { NextRequest, NextResponse } from 'next/server';
 import {
   allowedEmail, displayLabel, inviteTokenValid, isUuid,
@@ -17,7 +18,7 @@ type Room = { id: string; title: string; owner_user_id: string; created_at: stri
 type RoomEvent = {
   id: string; client_event_id: string; room_id: string; author_user_id: string|null; actor_type: 'human'|'ai'|'system';
   actor_label: string; content: string; created_at: string; model: string|null;
-  provider: string|null; parent_event_id: string|null;
+  provider: string|null; parent_event_id: string|null; request_mode?:string|null; finish_reason?:string|null; was_truncated?:boolean|null; reviewed_event_id?:string|null;
 };
 class ApiError extends Error { constructor(public status: number, message: string) { super(message); } }
 function required(name: string): string {
@@ -152,7 +153,7 @@ async function visibleRoom(session: Session, id: string): Promise<Room> {
   return rows[0];
 }
 async function events(session: Session, id: string, room: Room): Promise<RoomEvent[]> {
-  const rows = await supabase(`/rest/v1/penumbra_room_events?select=id,room_id,client_event_id,author_user_id,actor_type,actor_label,content,created_at,model,provider,parent_event_id&room_id=eq.${id}&order=created_at.desc,id.desc&limit=120`, 'GET', undefined, {access:session.access}) as RoomEvent[];
+  const rows = await supabase(`/rest/v1/penumbra_room_events?select=id,room_id,client_event_id,author_user_id,actor_type,actor_label,content,created_at,model,provider,parent_event_id,request_mode,finish_reason,was_truncated,reviewed_event_id&room_id=eq.${id}&order=created_at.desc,id.desc&limit=120`, 'GET', undefined, {access:session.access}) as RoomEvent[];
   // Only after room-access verification: resolve speaker labels from server-controlled membership.
   const members = await supabase(`/rest/v1/penumbra_room_members?select=user_id,display_name&room_id=eq.${id}`, 'GET', undefined, {admin:true}) as Array<{user_id:string;display_name:string}>;
   const labels = new Map((members||[]).map(m=>[m.user_id,m.display_name]));
@@ -163,6 +164,54 @@ async function events(session: Session, id: string, room: Room): Promise<RoomEve
 async function existingEvent(session: Session, id: string, clientId: string): Promise<RoomEvent | null> {
   const rows = await supabase(`/rest/v1/penumbra_room_events?select=*&room_id=eq.${id}&client_event_id=eq.${clientId}&limit=1`,'GET',undefined,{access:session.access}) as RoomEvent[];
   return rows?.[0] || null;
+}
+type Worker = 'chatgpt'|'grok';
+function workerProvider(worker:Worker):string{return worker==='chatgpt'?'openai':'spacexai';}
+async function generateAndSave(input:{
+ session:Session; room:Room; id:string; thread:RoomEvent[];
+ parentId:string; clientId:string; worker:Worker;
+ mode:WorkMode; depth:Depth; reviewEventId?:string;
+}):Promise<RoomEvent> {
+ const {session,room,id,thread,parentId,clientId,worker,mode,depth,reviewEventId}=input;
+ const model=worker==='chatgpt'?'openai/gpt-4.1-mini':'spacexai/grok-4.20-non-reasoning';
+ const provider=workerProvider(worker);
+ const actorLabel=worker==='chatgpt'?'ChatGPT':'Grok';
+ const evidence=thread.filter(e=>e.actor_type==='system'&&e.actor_label==='Hive Evidence')
+   .slice(-2).map(e=>({content:e.content}));
+ const messages=buildModePrompt({worker,mode,parentId,events:thread,approvedEvidence:evidence,reviewEventId});
+ const gateway=await fetch('https://ai-gateway.vercel.sh/v1/chat/completions',{
+   method:'POST',cache:'no-store',signal:AbortSignal.timeout(depth==='deep'?55000:30000),
+   headers:{Authorization:`Bearer ${required('AI_GATEWAY_API_KEY')}`,'Content-Type':'application/json'},
+   body:JSON.stringify({model,max_tokens:outputLimit(depth),stream:false,messages}),
+ });
+ if(!gateway.ok)throw new ApiError(502,`AI gateway ${actorLabel} request failed (HTTP ${gateway.status}); reservation consumed`);
+ const output=await gateway.json();
+ const result=output?.choices?.[0];
+ const content=result?.message?.content;
+ if(typeof content!=='string'||!content.trim())throw new ApiError(502,actorLabel+' returned no text; reservation consumed');
+ if(foreignSeatClaim(worker,content))throw new ApiError(502,actorLabel+' claimed the other model identity; output not stored; reservation consumed');
+ const finishReason=typeof result?.finish_reason==='string'?result.finish_reason:null;
+ const wasTruncated=finishReason===null?null:finishReason==='length';
+ const actualModel=typeof output?.model==='string'?output.model:model;
+ try {
+   const saved=await supabase('/rest/v1/penumbra_room_events?select=*','POST',{
+      room_id:id,client_event_id:clientId,actor_type:'ai',actor_label:actorLabel,
+      author_user_id:null,content:content.trim().slice(0,20000),
+      provider,model:actualModel,parent_event_id:parentId,
+      request_mode:mode,finish_reason:finishReason,was_truncated:wasTruncated,
+      reviewed_event_id:mode==='verify'?reviewEventId:null,
+   },{admin:true,prefer:'return=representation'}) as RoomEvent[];
+   return saved[0];
+ }catch(e){
+   if(e instanceof ApiError&&e.status===409) {
+     const existing=await existingEvent(session,id,clientId);
+     if(existing)return existing;
+     const savedReply=(await events(session,id,room)).find(event=>
+       event.actor_type==='ai'&&event.parent_event_id===parentId&&event.provider===provider);
+     if(savedReply)return savedReply;
+   }
+   throw e;
+ }
 }
 async function handle(req: NextRequest, parts: string[], method: 'GET'|'POST'): Promise<NextResponse> {
   const route = parts.join('/');
@@ -447,91 +496,68 @@ async function handle(req: NextRequest, parts: string[], method: 'GET'|'POST'): 
     }
     return signedResponse(session,{sent:true,recipient:email,expiresAt:expires_at,roomId:id},201);
   }
-  if (route === `rooms/${id}/ai` && method === 'POST') {
-    if (process.env.PENUMBRA_AI_ENABLED !== 'true') throw new ApiError(503,'AI participant is disabled until owner activates its budget');
-    const body = await readBody(req);
-    const clientId = body.clientEventId, parentId = body.parentEventId;
-    // Older previews default to ChatGPT; new clients must select a worker explicitly.
-    const worker = body.worker === undefined ? 'chatgpt' : body.worker;
-    if (worker !== 'chatgpt' && worker !== 'grok') throw new ApiError(400,'Unknown AI worker');
-    // A single explicitly-approved recovery request is distinct from the exhausted
-    // ordinary four-call test allowance; it never changes that existing allowance.
-    if (body.recoveryTest !== undefined && body.recoveryTest !== true) throw new ApiError(400,'Invalid recovery test flag');
-    const recoveryTest = body.recoveryTest === true;
-    if (recoveryTest && (worker !== 'grok' || room.owner_user_id !== session.user.id ||
-        normalizedEmail(session.user.email) !== normalizedEmail(required('PENUMBRA_MASON_EMAIL')))) {
-      throw new ApiError(403,'Only Human Authority may request the one-time Grok recovery test');
+  if (route === `rooms/${id}/ai` && method==='POST') {
+    if(process.env.PENUMBRA_AI_ENABLED!=='true')throw new ApiError(503,'AI participant disabled');
+    const body=await readBody(req);
+    const worker=body.worker==='chatgpt'||body.worker==='grok'?body.worker:null;
+    if(!worker)throw new ApiError(400,'Choose ChatGPT or Grok');
+    const mode=body.mode===undefined?'ask_one':body.mode;
+    const depth=body.depth===undefined?'short':body.depth;
+    if(!validMode(mode)||mode==='independent')throw new ApiError(400,'Use independent endpoint for pair mode');
+    if(!validDepth(depth))throw new ApiError(400,'Invalid answer length');
+    const parentId=body.parentEventId,clientId=body.clientEventId;
+    if(!isUuid(parentId)||!isUuid(clientId))throw new ApiError(400,'Invalid request IDs');
+    const prior=await existingEvent(session,id,clientId);
+    if(prior)return signedResponse(session,{event:prior,duplicate:true});
+    const thread=await events(session,id,room);
+    if(!thread.some(e=>e.id===parentId&&e.actor_type==='human'))throw new ApiError(400,'Select a human message');
+    const provider=workerProvider(worker);
+    const alreadyAnswered=thread.find(e=>e.actor_type==='ai'&&e.parent_event_id===parentId&&e.provider===provider);
+    if(alreadyAnswered)return signedResponse(session,{event:alreadyAnswered,duplicate:true});
+    let reviewEventId:string|undefined;
+    if(mode==='verify'){
+      reviewEventId=typeof body.reviewEventId==='string'?body.reviewEventId:undefined;
+      const target=thread.find(e=>e.id===reviewEventId&&e.parent_event_id===parentId&&e.actor_type==='ai');
+      if(!isUuid(reviewEventId)||!target)throw new ApiError(400,'Select an existing answer for verification');
+      if(target.provider===provider || (worker==='grok'&&target.provider==='xai'))
+        throw new ApiError(400,'Worker cannot verify its own answer');
     }
-    if (!isUuid(clientId) || !isUuid(parentId)) throw new ApiError(400,'Invalid AI request IDs');
-    const prior = await existingEvent(session,id,clientId);
-    if (prior) return signedResponse(session,{event:prior,duplicate:true});
-    const thread = await events(session,id,room);
-    const parent = thread.find(e => e.id === parentId);
-    if (!parent || parent.actor_type !== 'human') throw new ApiError(400,'AI reply must address a visible human message');
-    // AI generation is manually invoked by a signed-in room member only.
-    const model = worker === 'chatgpt' ? 'openai/gpt-4.1-mini' : 'spacexai/grok-4.20-non-reasoning';
-    const provider = model.split('/')[0];
-    const modelApproved = worker === 'chatgpt' ? provider === 'openai' : (provider === 'spacexai' || provider === 'xai');
-    if (!modelApproved || !model.includes('/')) throw new ApiError(503,'AI worker model does not match its selected provider');
-    const actorLabel = worker === 'chatgpt' ? 'ChatGPT' : 'Grok';
-    const attachedHive = thread.filter(e=>e.actor_type==='system' && e.actor_label==='Hive Evidence').slice(-2);
-    const messages = buildSeatPrompt({
-      worker,
-      parentId,
-      events:thread,
-      approvedEvidence:attachedHive.map(e=>({content:e.content})),
-    });
-    const alreadyAnswered = thread.find(e=>e.actor_type==='ai' && e.parent_event_id===parentId && e.provider===provider);
-    if (alreadyAnswered) return signedResponse(session,{event:alreadyAnswered,duplicate:true});
-    // Pilot calls are independently authorized and counted by the database.
-    // Failures consume a reservation conservatively. The original 2+2 test
-    // gate and single Grok recovery receipt remain unchanged and historical.
-    const gatewayKey = required('AI_GATEWAY_API_KEY');
-    const reserved = await supabase(
-      recoveryTest ? '/rest/v1/rpc/penumbra_reserve_grok_recovery_test' :
-        '/rest/v1/rpc/penumbra_reserve_ai_pilot_call',
-      'POST',
-      recoveryTest
-        ? {p_room:id,p_user:session.user.id,p_parent:parentId,p_client:clientId}
-        : {p_room:id,p_user:session.user.id,p_worker:worker,p_parent:parentId,p_client:clientId},
-      {admin:true},
-    ) as boolean;
-    if (reserved !== true) throw new ApiError(402,
-      recoveryTest ? 'One-time Grok recovery permission already used' :
-      'PENUMBRA production pilot limit reached or this worker already has a reservation for this message. Pilot: 10 ChatGPT and 10 Grok requests maximum.');
-    const gateway = await fetch('https://ai-gateway.vercel.sh/v1/chat/completions',{
-      method:'POST',cache:'no-store',signal:AbortSignal.timeout(30000),
-      headers:{Authorization:`Bearer ${gatewayKey}`,'Content-Type':'application/json'},
-      body:JSON.stringify({model,max_tokens:250,stream:false,messages}),
-    });
-    if (!gateway.ok) throw new ApiError(502,`AI gateway request failed (HTTP ${gateway.status})`);
-    const output = await gateway.json();
-    const content = output?.choices?.[0]?.message?.content;
-    if (typeof content !== 'string' || !content.trim()) throw new ApiError(502,'AI returned no text');
-    if (foreignSeatClaim(worker,content)) {
-      throw new ApiError(502,'AI response claimed another model seat identity and was not saved. No automatic retry; one pilot reservation was consumed.');
-    }
-    const actualModel = typeof output?.model === 'string' ? output.model : model;
-    let saved: RoomEvent[];
-    try {
-      saved = await supabase('/rest/v1/penumbra_room_events?select=*','POST',{
-        room_id:id,client_event_id:clientId,actor_type:'ai',actor_label:actorLabel,
-        author_user_id:null,content:content.trim().slice(0,20000),
-        provider,model:actualModel,parent_event_id:parentId,
-      },{admin:true,prefer:'return=representation'}) as RoomEvent[];
-    } catch (e) {
-      if (e instanceof ApiError && e.status === 409) {
-        const existing = await existingEvent(session,id,clientId);
-        if (existing) return signedResponse(session,{event:existing,duplicate:true});
-        const savedReply = (await events(session,id,room)).find(event=>event.actor_type==='ai' && event.parent_event_id===parentId && event.provider===provider);
-        if (savedReply) return signedResponse(session,{event:savedReply,duplicate:true});
-      }
-      if (recoveryTest && e instanceof ApiError && e.status === 409) {
-        throw new ApiError(409,'Grok recovery response rejected by persistence constraint');
-      }
-      throw e;
-    }
-    return signedResponse(session,{event:saved[0],recoveryTest},201);
+    const reserved=await supabase('/rest/v1/rpc/penumbra_reserve_ai_pilot_call','POST',{
+      p_room:id,p_user:session.user.id,p_worker:worker,p_parent:parentId,p_client:clientId,
+    },{admin:true}) as boolean;
+    if(reserved!==true)throw new ApiError(402,'Pilot allowance exhausted or worker already reserved on this message');
+    const event=await generateAndSave({session,room,id,thread,parentId,clientId,worker,mode,depth,reviewEventId});
+    return signedResponse(session,{event},201);
+  }
+  if (route === `rooms/${id}/independent` && method==='POST') {
+    if(process.env.PENUMBRA_AI_ENABLED!=='true')throw new ApiError(503,'AI participant disabled');
+    const body=await readBody(req);
+    const parentId=body.parentEventId,chatId=body.chatClientEventId,grokId=body.grokClientEventId;
+    const depth=body.depth===undefined?'short':body.depth;
+    if(!validDepth(depth))throw new ApiError(400,'Invalid answer length');
+    if(!isUuid(parentId)||!isUuid(chatId)||!isUuid(grokId)||chatId===grokId)
+      throw new ApiError(400,'Independent analysis needs separate valid request IDs');
+    const thread=await events(session,id,room);
+    if(!independentEligible(thread,parentId))
+      throw new ApiError(409,'Independent comparison requires a fresh human message with no AI replies');
+    // A single DB transaction reserves both workers before any model is called.
+    // Identical frozen pre-generation thread is supplied independently to each worker.
+    const reserved=await supabase('/rest/v1/rpc/penumbra_reserve_independent_pair','POST',{
+      p_room:id,p_user:session.user.id,p_parent:parentId,
+      p_chat_client:chatId,p_grok_client:grokId,
+    },{admin:true}) as boolean;
+    if(reserved!==true)throw new ApiError(402,'Two available worker allowances required; or this message already has an AI reservation');
+    const work: Array<{worker:Worker;clientId:string}>=[
+      {worker:'chatgpt',clientId:chatId},{worker:'grok',clientId:grokId},
+    ];
+    const results=await Promise.allSettled(work.map(w=>generateAndSave({
+      session,room,id,thread,parentId,clientId:w.clientId,worker:w.worker,mode:'independent',depth,
+    })));
+    const replies=results.map((r,i)=>r.status==='fulfilled'?
+      {worker:work[i].worker,status:'saved',event:r.value}:
+      {worker:work[i].worker,status:'failed',error:r.reason instanceof ApiError?
+        r.reason.message:'AI request or persistence failed. Reservation consumed.'});
+    return signedResponse(session,{mode:'independent',replies,complete:replies.every(x=>x.status==='saved')},201);
   }
   throw new ApiError(404,'Unknown route');
 }

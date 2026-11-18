@@ -281,6 +281,50 @@ async function handle(req: NextRequest, parts: string[], method: 'GET'|'POST'): 
     }
     return signedResponse(session,{event:rows[0]},201);
   }
+  if (route === `rooms/${id}/access`) {
+    if (room.owner_user_id !== session.user.id || !isOperator(session.user)) {
+      throw new ApiError(403,'Only Human Authority can manage room membership');
+    }
+    if (method === 'GET') {
+      const invites = await supabase(
+        `/rest/v1/penumbra_room_invites?select=id,invitee_email,created_at,expires_at,used_by,used_at,sent_at,revoked_at&room_id=eq.${id}&order=created_at.desc&limit=100`,
+        'GET',undefined,{admin:true},
+      );
+      const members = await supabase(
+        `/rest/v1/penumbra_room_members?select=user_id,role,display_name,created_at&room_id=eq.${id}&order=created_at.asc&limit=100`,
+        'GET',undefined,{admin:true},
+      );
+      return signedResponse(session,{invites,members,roomId:id});
+    }
+    const body = await readBody(req);
+    if (body.action==='revoke_invite' && isUuid(body.id)) {
+      const rows = await supabase(
+        `/rest/v1/penumbra_room_invites?select=id&id=eq.${body.id}&room_id=eq.${id}&used_by=is.null&revoked_at=is.null`,
+        'PATCH',{revoked_at:new Date().toISOString()},
+        {admin:true,prefer:'return=representation'},
+      ) as unknown[];
+      if (!rows.length) throw new ApiError(409,'Invitation already used, revoked, or not in this room');
+      return signedResponse(session,{revoked:true});
+    }
+    if (body.action==='remove_member' && isUuid(body.userId)) {
+      if (body.userId===room.owner_user_id) throw new ApiError(403,'Room owner cannot be removed');
+      const members = await supabase(
+        `/rest/v1/penumbra_room_members?select=user_id&room_id=eq.${id}&user_id=eq.${body.userId}&limit=1`,
+        'GET',undefined,{admin:true},
+      ) as unknown[];
+      if (!members.length) throw new ApiError(404,'Member not found in this room');
+      await supabase(
+        `/rest/v1/penumbra_room_members?room_id=eq.${id}&user_id=eq.${body.userId}`,
+        'DELETE',undefined,{admin:true},
+      );
+      await supabase(
+        `/rest/v1/penumbra_room_invites?room_id=eq.${id}&used_by=eq.${body.userId}&revoked_at=is.null`,
+        'PATCH',{revoked_at:new Date().toISOString()},{admin:true},
+      );
+      return signedResponse(session,{removed:true});
+    }
+    throw new ApiError(400,'Unknown room access operation');
+  }
   if (route === `rooms/${id}/hive`) {
     // Reading private Hive content and granting room visibility are distinct actions.
     // The owner alone may preview, and only an exact approved source is shared.
@@ -330,19 +374,64 @@ async function handle(req: NextRequest, parts: string[], method: 'GET'|'POST'): 
     return signedResponse(session,{event:rows[0],sharedWithRoom:true},201);
   }
   if (route === `rooms/${id}/invite` && method === 'POST') {
-    if (room.owner_user_id !== session.user.id) throw new ApiError(403,'Only the room owner can invite');
+    if (room.owner_user_id !== session.user.id || !isOperator(session.user)) {
+      throw new ApiError(403,'Only Human Authority can invite room participants');
+    }
     const body = await readBody(req);
     const email = normalizedEmail(body.email);
-    if (!allowed(email) || email === normalizedEmail(session.user.email)) throw new ApiError(400,'Invitee must be a different approved participant');
+    if (!emailValid(email) || email === normalizedEmail(session.user.email)) {
+      throw new ApiError(400,'Enter a valid email for a different participant');
+    }
+    // Check whether the address is already a member of this exact room.
+    const prior = await supabase(
+      `/rest/v1/penumbra_room_invites?select=id,used_by,created_at,expires_at,sent_at&room_id=eq.${id}&invitee_email=eq.${encodeURIComponent(email)}&revoked_at=is.null&order=created_at.desc&limit=30`,
+      'GET',undefined,{admin:true},
+    ) as Array<{id:string;used_by:string|null;created_at:string;expires_at:string;sent_at:string|null}>;
+    for (const invite of prior) {
+      if (invite.used_by) {
+        const member = await supabase(
+          `/rest/v1/penumbra_room_members?select=user_id&room_id=eq.${id}&user_id=eq.${invite.used_by}&limit=1`,
+          'GET',undefined,{admin:true},
+        ) as unknown[];
+        if (member.length) throw new ApiError(409,'This email already belongs to this room');
+      }
+      if (!invite.used_by && invite.sent_at && Date.parse(invite.expires_at)>Date.now() &&
+          Date.now()-Date.parse(invite.sent_at)<5*60*1000) {
+        throw new ApiError(429,'An invitation was recently emailed to this address. Check their inbox before resending.');
+      }
+    }
+    // A human owner click is required. This is never a scheduled or automated invitation.
     const token = randomBytes(32).toString('hex');
     const token_sha256 = createHash('sha256').update(token).digest('hex');
     const expires_at = new Date(Date.now()+24*60*60*1000).toISOString();
-    await supabase('/rest/v1/penumbra_room_invites','POST',{
+    const added = await supabase('/rest/v1/penumbra_room_invites?select=id','POST',{
       room_id:id,invited_by:session.user.id,invitee_email:email,token_sha256,expires_at,
-    },{admin:true,prefer:'return=minimal'});
-    const link = new URL('/penumbra-workroom/shared',req.url);
-    link.searchParams.set('room',id); link.searchParams.set('invite',token);
-    return signedResponse(session,{inviteUrl:link.toString(),expiresAt:expires_at,delivered:false});
+    },{admin:true,prefer:'return=representation'}) as Array<{id:string}>;
+    const inviteId=added?.[0]?.id;
+    if (!isUuid(inviteId)) throw new ApiError(502,'Could not create invitation');
+    const redirect = new URL('/penumbra-workroom/shared',req.url);
+    redirect.searchParams.set('room',id);
+    redirect.searchParams.set('invite',token);
+    try {
+      // Uses existing Supabase Auth custom SMTP (Resend), so a single email
+      // authenticates the recipient and carries the room invitation.
+      await supabase('/auth/v1/otp?redirect_to='+encodeURIComponent(redirect.toString()),
+        'POST',{email,create_user:true});
+    } catch(e) {
+      // A failed or ambiguous send must not leave a fresh claimable invitation.
+      await supabase('/rest/v1/penumbra_room_invites?id=eq.'+inviteId,
+        'PATCH',{revoked_at:new Date().toISOString()},{admin:true});
+      throw e;
+    }
+    await supabase('/rest/v1/penumbra_room_invites?id=eq.'+inviteId,
+      'PATCH',{sent_at:new Date().toISOString()},{admin:true});
+    // Any older unclaimed manually prepared links to this room/email are retired.
+    for (const entry of prior) {
+      if (!entry.used_by) await supabase('/rest/v1/penumbra_room_invites?id=eq.'+entry.id+
+        '&room_id=eq.'+id+'&used_by=is.null&revoked_at=is.null',
+        'PATCH',{revoked_at:new Date().toISOString()},{admin:true});
+    }
+    return signedResponse(session,{sent:true,recipient:email,expiresAt:expires_at,roomId:id},201);
   }
   if (route === `rooms/${id}/ai` && method === 'POST') {
     if (process.env.PENUMBRA_AI_ENABLED !== 'true') throw new ApiError(503,'AI participant is disabled until owner activates its budget');

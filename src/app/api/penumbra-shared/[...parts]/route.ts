@@ -256,6 +256,22 @@ async function handle(req: NextRequest, parts: string[], method: 'GET'|'POST'): 
     return signedResponse(session,{ok:true,roomId:id});
   }
   const room = await visibleRoom(session,id);
+  if (route === `rooms/${id}/pilot-status` && method === 'GET') {
+    // This is a global authorization ceiling shared by rooms. Expose only the
+    // remaining seat counts, never another room's participants or messages.
+    const rows = await supabase(
+      '/rest/v1/penumbra_ai_pilot_reservations?select=worker&limit=20',
+      'GET',undefined,{admin:true},
+    ) as Array<{worker:string}>;
+    const chatgptUsed=rows.filter(x=>x.worker==='chatgpt').length;
+    const grokUsed=rows.filter(x=>x.worker==='grok').length;
+    return signedResponse(session,{pilot:{
+      total:20,used:rows.length,remaining:Math.max(0,20-rows.length),
+      chatgpt:{limit:10,used:chatgptUsed,remaining:Math.max(0,10-chatgptUsed)},
+      grok:{limit:10,used:grokUsed,remaining:Math.max(0,10-grokUsed)},
+      mode:'MANUAL_ONLY',failedRequestsConsumeReservations:true,
+    }});
+  }
   if (route === `rooms/${id}/events`) {
     if (method === 'GET') return signedResponse(session,{events:await events(session,id,room)});
     const body = await readBody(req);
@@ -461,21 +477,22 @@ async function handle(req: NextRequest, parts: string[], method: 'GET'|'POST'): 
     const hiveContext = attachedHive.map(e=>e.content.slice(0,12000)).join('\n\n');
     const alreadyAnswered = thread.find(e=>e.actor_type==='ai' && e.parent_event_id===parentId && e.provider===provider);
     if (alreadyAnswered) return signedResponse(session,{event:alreadyAnswered,duplicate:true});
-    // Single transactional reservation, globally limited to four PENUMBRA test requests.
-    // A failed provider request consumes its reservation to keep the spending ceiling conservative.
+    // Pilot calls are independently authorized and counted by the database.
+    // Failures consume a reservation conservatively. The original 2+2 test
+    // gate and single Grok recovery receipt remain unchanged and historical.
     const gatewayKey = required('AI_GATEWAY_API_KEY');
     const reserved = await supabase(
-      recoveryTest ? '/rest/v1/rpc/penumbra_reserve_grok_recovery_test' : '/rest/v1/rpc/penumbra_reserve_ai_test_call',
+      recoveryTest ? '/rest/v1/rpc/penumbra_reserve_grok_recovery_test' :
+        '/rest/v1/rpc/penumbra_reserve_ai_pilot_call',
       'POST',
       recoveryTest
-        ? {p_room:id, p_user:session.user.id, p_parent:parentId, p_client:clientId}
-        : {p_room:id, p_user:session.user.id, p_worker:worker, p_client:clientId},
+        ? {p_room:id,p_user:session.user.id,p_parent:parentId,p_client:clientId}
+        : {p_room:id,p_user:session.user.id,p_worker:worker,p_parent:parentId,p_client:clientId},
       {admin:true},
     ) as boolean;
     if (reserved !== true) throw new ApiError(402,
-      recoveryTest
-        ? 'One-time Grok recovery permission already used or target message is not eligible'
-        : 'PENUMBRA AI test allowance exhausted (2 ChatGPT + 2 Grok calls maximum)');
+      recoveryTest ? 'One-time Grok recovery permission already used' :
+      'PENUMBRA production pilot limit reached or this worker already has a reservation for this message. Pilot: 10 ChatGPT and 10 Grok requests maximum.');
     const gateway = await fetch('https://ai-gateway.vercel.sh/v1/chat/completions',{
       method:'POST',cache:'no-store',signal:AbortSignal.timeout(30000),
       headers:{Authorization:`Bearer ${gatewayKey}`,'Content-Type':'application/json'},

@@ -8,6 +8,11 @@ type Event = { id:string; room_id:string; actor_label:string; actor_type:'human'
 type JsonResponse = { error?:string; [key:string]:any };
 type HiveSource = {path:string;sha:string;content:string};
 type HiveStarter = {label:string;path:string};
+type PilotStatus = {
+  total:number;used:number;remaining:number;mode:string;
+  chatgpt:{limit:number;used:number;remaining:number};
+  grok:{limit:number;used:number;remaining:number};
+};
 const ROOT = '/api/penumbra-shared';
 
 async function api(path:string, method:'GET'|'POST'='GET', body?:unknown):Promise<JsonResponse> {
@@ -40,6 +45,7 @@ export default function SharedRoomClient() {
   const [hivePath,setHivePath] = useState('hive/current/2026-09-05_penumbra_handoff.yaml');
   const [hiveStarters,setHiveStarters] = useState<HiveStarter[]>([]);
   const [hivePreview,setHivePreview] = useState<HiveSource|null>(null);
+  const [pilot,setPilot] = useState<PilotStatus|null>(null);
   const bottom = useRef<HTMLDivElement|null>(null);
   const mounted = useRef(false);
   const activeRoomId = useRef<string|null>(null);
@@ -90,12 +96,19 @@ export default function SharedRoomClient() {
       await loadRooms();
     })().catch((e)=>{if(location.hash.includes('error='))setError('The sign-in link expired or was rejected. Request another one.');}).finally(()=>setInitializing(false));
   },[loadRooms]);
+  const reloadPilot = useCallback(async(roomId:string)=>{
+    const data=await api(`/rooms/${roomId}/pilot-status`);
+    if(activeRoomId.current===roomId) setPilot(data.pilot as PilotStatus);
+  },[]);
   useEffect(()=>{
     if(!active) return;
     activeRoomId.current=active.id;
     lastEventCount.current=0;
     setEvents([]);
     setUnread(0);
+    setError('');
+    setPilot(null);
+    void reloadPilot(active.id).catch(e=>setError('Pilot status unavailable: '+(e as Error).message));
     setInviteEmail('');
     setHivePreview(null);
     if(user && active.owner_user_id===user.id){
@@ -104,7 +117,7 @@ export default function SharedRoomClient() {
     void loadEvents(active.id);
     const timer = window.setInterval(()=>{if(document.visibilityState==='visible') void loadEvents(active.id,true);},3500);
     return ()=>window.clearInterval(timer);
-  },[active?.id,user?.id,loadEvents]);
+  },[active?.id,user?.id,loadEvents,reloadPilot]);
   useEffect(()=>{ if(!events.length) return; bottom.current?.scrollIntoView({behavior:'smooth',block:'end'}); },[events.length,active?.id]);
 
   async function run(task:()=>Promise<void>) {
@@ -138,7 +151,7 @@ export default function SharedRoomClient() {
     setAiBusy(true);setError('');setNotice(`${worker==='chatgpt'?'ChatGPT':'Grok'} response requested by a room member.`);
     api(`/rooms/${active.id}/ai`,'POST',{clientEventId:crypto.randomUUID(),parentEventId:human.id,worker})
       .then(()=>loadEvents(active.id)).catch(e=>setError((e as Error).message))
-      .finally(()=>{setAiBusy(false);setNotice('');});
+      .finally(()=>{void reloadPilot(active.id).catch(()=>{});setAiBusy(false);setNotice('');});
   }
   function requestGrokRecovery(parentId:string){
     if(!active||!user||active.owner_user_id!==user.id) return;
@@ -212,15 +225,24 @@ export default function SharedRoomClient() {
       {owner&&<form onSubmit={createInvite} className="nw-stack nw-invite"><h3>Invite a participant</h3><label>Participant email <input type="email" required value={inviteEmail} onChange={e=>setInviteEmail(e.target.value)} placeholder="person@example.com"/></label><button disabled={busy}>Email invitation to this room</button>
         <small>Explicit click sends the email. Each invite is single-use and expires after 24 hours.</small><a className="nw-access-link" href="/penumbra-workroom/access">Manage all rooms and people</a></form>}
     </aside><section className="nw-panel nw-room"><div className="nw-room-top"><div><h2>{active?.title||'Select a room'}</h2><div className="nw-small">{active?'Messages are stored in the shared database':'Create a room to start'}</div></div><span className="nw-presence">● Signed-in room</span></div>
-      {active&&<><div className="nw-thread" role="log" aria-live="polite" onScroll={()=>setUnread(0)}>
+      {active&&<><section className="nw-pilot-status" role="status" aria-label="AI pilot allowance">
+        <b>AI Gateway · production pilot</b>
+        {pilot?<div className="nw-pilot-counts">
+          <span>ChatGPT <strong>{pilot.chatgpt.remaining}/{pilot.chatgpt.limit}</strong> left</span>
+          <span>Grok <strong>{pilot.grok.remaining}/{pilot.grok.limit}</strong> left</span>
+          <span>Total <strong>{pilot.remaining}/{pilot.total}</strong> left</span>
+        </div>:<span className="nw-small">Checking allowance…</span>}
+        <small>Manual requests only. Failed calls still use a reservation. No automatic retries.</small>
+      </section>
+      <div className="nw-thread" role="log" aria-live="polite" onScroll={()=>setUnread(0)}>
         {events.length===0&&<p className="nw-empty">No messages yet. Say hello.</p>}
         {events.map(event=><article key={event.id} className={'nw-entry '+(event.actor_type==='ai'?'nw-ai':event.actor_type==='system'?'nw-hive-entry':'')}>
           <div className="nw-meta"><b>{event.actor_label}</b>{event.actor_type==='ai'&&<span>AI · {event.model||'model unspecified'}</span>}<time dateTime={event.created_at}>{new Date(event.created_at).toLocaleString()}</time></div>
           <p>{event.content}</p></article>)}<div ref={bottom}/></div>
         {unread>0&&<p className="nw-small">{unread} newer message(s)</p>}
         <form className="nw-compose" onSubmit={sendMessage}><label htmlFor="nw-msg">Message</label><textarea id="nw-msg" value={message} onChange={e=>setMessage(e.target.value)} placeholder="Add a message visible to both humans…" maxLength={4000} rows={3} required />
-          <div className="nw-actions"><button className="nw-primary" disabled={busy||!message.trim()}>Post message</button><button type="button" disabled={aiBusy||busy||!events.some(e=>e.actor_type==='human')} onClick={()=>requestAI('chatgpt')}>{aiBusy?'Worker responding…':'Ask ChatGPT'}</button><button type="button" disabled={aiBusy||busy||!events.some(e=>e.actor_type==='human')} onClick={()=>requestAI('grok')}>{aiBusy?'Worker responding…':'Ask Grok'}</button></div></form>
-        {owner&&recoveryParent&&<section className="nw-stack nw-hive" aria-label="One-time Grok recovery test">
+          <div className="nw-actions"><button className="nw-primary" disabled={busy||!message.trim()}>Post message</button><button type="button" disabled={aiBusy||busy||!pilot||pilot.chatgpt.remaining===0||!events.some(e=>e.actor_type==='human')} onClick={()=>requestAI('chatgpt')}>{aiBusy?'Worker responding…':'Ask ChatGPT'}</button><button type="button" disabled={aiBusy||busy||!pilot||pilot.grok.remaining===0||!events.some(e=>e.actor_type==='human')} onClick={()=>requestAI('grok')}>{aiBusy?'Worker responding…':'Ask Grok'}</button></div></form>
+        {false&&owner&&recoveryParent&&<section className="nw-stack nw-hive" aria-label="One-time Grok recovery test">
           <h3>One-time Grok recovery test</h3>
           <p className="nw-small">Human Authority approved exactly one additional, short Grok call to answer a human message ChatGPT already answered. This test is separate from the exhausted four-call allowance. It cannot share Hive files, invite anyone, or retry automatically.</p>
           <p className="nw-small">Selected earlier human message: <b>{recoveryParent.content.slice(0,180)}</b></p>

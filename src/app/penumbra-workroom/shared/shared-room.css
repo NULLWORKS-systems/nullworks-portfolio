@@ -27,3 +27,9 @@
 .nw-access-entry button{flex:none;font-size:.8rem;padding:8px;}
 .nw-break{overflow-wrap:anywhere;}
 @media (max-width:600px){.nw-header-actions{align-items:end}.nw-access-entry{flex-direction:column;}.nw-shared-header{flex-wrap:wrap}.nw-access-portal .nw-panel{padding:14px;}}
+
+.nw-pilot-status{display:grid;gap:7px;border:1px solid #316b70;background:#112a36;border-radius:10px;padding:11px;font-size:.82rem;}
+.nw-pilot-counts{display:flex;gap:8px;flex-wrap:wrap;}
+.nw-pilot-counts span{background:#193c44;border-radius:7px;padding:6px 9px;}
+.nw-pilot-counts strong{color:#9becde;}
+.nw-pilot-status small{color:#b6ccd5;}

@@ -24,7 +24,7 @@ test('ChatGPT receives other AI output as quoted user-reference data, never assi
     worker:'chatgpt',events:[olderGrok,olderChatGPT,human],
     parentId:human.id,approvedEvidence:[evidence],
   });
-  assert.ok(messages.every(x=>x.role!=='assistant'));
+  assert.equal((messages.map(x=>x.role) as string[]).includes('assistant'),false);
   assert.match(messages[0].content,/You are ChatGPT, the ChatGPT seat/);
   assert.match(messages[0].content,/NOT Grok/);
   assert.equal(messages[messages.length-1].role,'user');
@@ -42,7 +42,7 @@ test('Grok receives explicit own identity and exact human message',()=>{
     worker:'grok',events:[olderChatGPT,olderGrok,human],
     parentId:human.id,approvedEvidence:[],
   });
-  assert.ok(messages.every(x=>x.role!=='assistant'));
+  assert.equal((messages.map(x=>x.role) as string[]).includes('assistant'),false);
   assert.match(messages[0].content,/You are Grok, the Grok seat/);
   assert.match(messages.at(-1)?.content||'',/Reply as Grok/);
 });

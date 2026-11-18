@@ -5,7 +5,7 @@ import { foreignSeatClaim } from '@/lib/penumbra-shared/ai-seat-prompt';
 
 type User = { id:string; email:string; name:string; isOperator?:boolean };
 type Room = { id:string; title:string; owner_user_id:string; created_at:string };
-type Event = { id:string; room_id:string; actor_label:string; actor_type:'human'|'ai'|'system'; content:string; created_at:string; model:string|null; parent_event_id:string|null };
+type Event = { id:string; room_id:string; actor_label:string; actor_type:'human'|'ai'|'system'; content:string; created_at:string; model:string|null; provider?:string|null; parent_event_id:string|null; request_mode?:string|null; finish_reason?:string|null; was_truncated?:boolean|null; reviewed_event_id?:string|null };
 type JsonResponse = { error?:string; [key:string]:any };
 type HiveSource = {path:string;sha:string;content:string};
 type HiveStarter = {label:string;path:string};
@@ -47,6 +47,9 @@ export default function SharedRoomClient() {
   const [hiveStarters,setHiveStarters] = useState<HiveStarter[]>([]);
   const [hivePreview,setHivePreview] = useState<HiveSource|null>(null);
   const [pilot,setPilot] = useState<PilotStatus|null>(null);
+  const [aiMode,setAiMode]=useState<'ask_one'|'independent'|'verify'>('ask_one');
+  const [answerDepth,setAnswerDepth]=useState<'short'|'deep'>('short');
+  const [reviewEventId,setReviewEventId]=useState('');
   const bottom = useRef<HTMLDivElement|null>(null);
   const mounted = useRef(false);
   const activeRoomId = useRef<string|null>(null);
@@ -146,13 +149,36 @@ export default function SharedRoomClient() {
   function sendMessage(e:FormEvent){e.preventDefault();if(!active||!message.trim())return;const content=message;void run(async()=>{
     await api(`/rooms/${active.id}/events`,'POST',{clientEventId:crypto.randomUUID(),content});setMessage('');await loadEvents(active.id);
   });}
-  function requestAI(worker:'chatgpt'|'grok'){ if(!active)return;
-    const human = [...events].reverse().find(e=>e.actor_type==='human');
-    if(!human){setError('Send a human message first.');return;}
-    setAiBusy(true);setError('');setNotice(`${worker==='chatgpt'?'ChatGPT':'Grok'} response requested by a room member.`);
-    api(`/rooms/${active.id}/ai`,'POST',{clientEventId:crypto.randomUUID(),parentEventId:human.id,worker})
-      .then(()=>loadEvents(active.id)).catch(e=>setError((e as Error).message))
-      .finally(()=>{void reloadPilot(active.id).catch(()=>{});setAiBusy(false);setNotice('');});
+  function requestAI(worker:'chatgpt'|'grok',mode:'ask_one'|'verify'='ask_one',selectedReview?:Event){
+    if(!active)return;
+    const human=mode==='verify'
+      ?events.find(e=>e.id===selectedReview?.parent_event_id)
+      :[...events].reverse().find(e=>e.actor_type==='human');
+    if(!human){setError('Select a human message first.');return;}
+    setAiBusy(true);setError('');
+    setNotice(mode==='verify'?'Verifying a specific stored answer.':'Requesting one '+worker+' answer.');
+    api(`/rooms/${active.id}/ai`,'POST',{
+      clientEventId:crypto.randomUUID(),parentEventId:human.id,
+      worker,mode,depth:answerDepth,
+      ...(selectedReview?{reviewEventId:selectedReview.id}:{}),
+    })
+      .then(async()=>{await loadEvents(active.id);setNotice('Reply saved. Check source and finish status.');})
+      .catch(e=>{setError((e as Error).message);setNotice('No automatic retry was made.');})
+      .finally(()=>{void reloadPilot(active.id).catch(()=>{});setAiBusy(false);});
+  }
+  function requestIndependent(parentId:string){
+    if(!active||aiBusy)return;
+    setAiBusy(true);setError('');setNotice('Independent pair requested: both models receive the same frozen evidence snapshot.');
+    api(`/rooms/${active.id}/independent`,'POST',{
+      parentEventId:parentId,chatClientEventId:crypto.randomUUID(),
+      grokClientEventId:crypto.randomUUID(),depth:answerDepth,
+    }).then(async(result)=>{
+      await loadEvents(active.id);
+      const failed=(result.replies||[]).filter((r:{status:string})=>r.status!=='saved');
+      setNotice(failed.length?'Partial independent review: '+failed.map((r:{worker:string,error:string})=>r.worker+': '+r.error).join('; '):
+        'Two independent answers saved. Neither model saw the other answer before generation.');
+    }).catch(e=>{setError((e as Error).message);setNotice('No automatic retry was made.');})
+      .finally(()=>{void reloadPilot(active.id).catch(()=>{});setAiBusy(false);});
   }
   function createInvite(e:FormEvent){e.preventDefault();if(!active)return;void run(async()=>{
     const res=await api(`/rooms/${active.id}/invite`,'POST',{email:inviteEmail});
@@ -173,6 +199,17 @@ export default function SharedRoomClient() {
     setHivePreview(null);
   });}
   const owner=!!user&&!!active&&active.owner_user_id===user.id;
+  const latestHuman=[...events].reverse().find(e=>e.actor_type==='human');
+  const existingOnLatest=events.filter(e=>e.actor_type==='ai'&&e.parent_event_id===latestHuman?.id);
+  const independentAvailable=!!latestHuman&&existingOnLatest.length===0&&
+    !!pilot&&pilot.chatgpt.remaining>0&&pilot.grok.remaining>0;
+  const reviewChoices=events.filter(e=>e.actor_type==='ai'&&!!e.parent_event_id&&
+    (e.provider==='openai'||e.provider==='spacexai'||e.provider==='xai')&&
+    !events.some(other=>other.actor_type==='ai'&&other.parent_event_id===e.parent_event_id&&
+      other.provider!==e.provider&& (other.provider==='openai'||other.provider==='spacexai'||other.provider==='xai')));
+  const selectedReview=reviewChoices.find(e=>e.id===reviewEventId)||reviewChoices.at(-1);
+  const verifyWorker=selectedReview?.provider==='openai'?'grok':'chatgpt';
+  const verifyRemaining=verifyWorker==='grok'?pilot?.grok.remaining:pilot?.chatgpt.remaining;
   return <main className="nw-shared">
     <header className="nw-shared-header"><div><span className="eyebrow">NULLWORKS / PENUMBRA</span><h1>Shared workroom</h1><p>Mason · Jason · ChatGPT · Grok</p></div><div className="nw-header-actions">{user?.isOperator&&<a className="nw-access-link" href="/penumbra-workroom/access">Access Portal</a>}{user&&<button type="button" onClick={signOut}>Sign out</button>}</div></header>
     <div className="nw-shared-note">Private, member-only text room. ChatGPT and Grok respond only when requested. The owner can explicitly attach sourced, read-only Hive evidence; private repository credentials never reach the AI seats or participants.</div>
@@ -221,10 +258,54 @@ export default function SharedRoomClient() {
           {event.actor_type==='ai'&&(event.actor_label==='ChatGPT'||event.actor_label==='Grok')&&
             foreignSeatClaim(event.actor_label==='ChatGPT'?'chatgpt':'grok',event.content)&&
             <p className="nw-seat-warning">Identity mismatch: this reply claims another AI's identity. The model badge reflects the provider used, but the text is unreliable. Historical record retained for audit.</p>}
+          {event.actor_type==='ai'&&<div className="nw-ai-receipt">
+            <span>Mode: {event.request_mode||'historical'}</span>
+            {event.reviewed_event_id&&<span>Verifies: {event.reviewed_event_id.slice(0,8)}</span>}
+            {event.was_truncated===true&&<strong className="nw-truncation">Output limit reached · response incomplete</strong>}
+            {event.was_truncated===null&&event.finish_reason==null&&<span>Finish reason not recorded</span>}
+            {event.was_truncated===false&&<span>Completed · {event.finish_reason||'provider reported'}</span>}
+          </div>}
           <p>{event.content}</p></article>)}<div ref={bottom}/></div>
         {unread>0&&<p className="nw-small">{unread} newer message(s)</p>}
         <form className="nw-compose" onSubmit={sendMessage}><label htmlFor="nw-msg">Message</label><textarea id="nw-msg" value={message} onChange={e=>setMessage(e.target.value)} placeholder="Add a message visible to both humans…" maxLength={4000} rows={3} required />
-          <div className="nw-actions"><button className="nw-primary" disabled={busy||!message.trim()}>Post message</button><button type="button" disabled={aiBusy||busy||!pilot||pilot.chatgpt.remaining===0||!events.some(e=>e.actor_type==='human')} onClick={()=>requestAI('chatgpt')}>{aiBusy?'Worker responding…':'Ask ChatGPT'}</button><button type="button" disabled={aiBusy||busy||!pilot||pilot.grok.remaining===0||!events.some(e=>e.actor_type==='human')} onClick={()=>requestAI('grok')}>{aiBusy?'Worker responding…':'Ask Grok'}</button></div></form>
+          <div className="nw-actions"><button className="nw-primary" disabled={busy||!message.trim()}>Post message</button></div></form>
+        <section className="nw-mode-panel" aria-label="AI review modes">
+          <h3>AI work mode</h3>
+          <div className="nw-mode-selector">
+            <label>Mode <select value={aiMode} onChange={e=>setAiMode(e.target.value as 'ask_one'|'independent'|'verify')}>
+              <option value="ask_one">Ask One</option>
+              <option value="independent">Independent Review (2 calls)</option>
+              <option value="verify">Verify Answer (1 call)</option>
+            </select></label>
+            <label>Response length <select value={answerDepth} onChange={e=>setAnswerDepth(e.target.value as 'short'|'deep')}>
+              <option value="short">Short · 250 tokens</option>
+              <option value="deep">Deep · 1,200 tokens</option>
+            </select></label>
+          </div>
+          {aiMode==='ask_one'&&<><p className="nw-small">Select exactly one worker. Uses one reservation; the other remains optional for later verification.</p>
+            <div className="nw-actions">
+              <button type="button" disabled={aiBusy||busy||!pilot||pilot.chatgpt.remaining===0||!latestHuman} onClick={()=>requestAI('chatgpt')}>{aiBusy?'Working…':'Ask ChatGPT · 1 call'}</button>
+              <button type="button" disabled={aiBusy||busy||!pilot||pilot.grok.remaining===0||!latestHuman} onClick={()=>requestAI('grok')}>{aiBusy?'Working…':'Ask Grok · 1 call'}</button>
+            </div></>}
+          {aiMode==='independent'&&<><p className="nw-small">Both workers answer the latest fresh human message independently, using the same frozen context. Neither sees the other's answer. One manual click reserves two calls atomically; partial failures are recorded.</p>
+            <button type="button" disabled={aiBusy||busy||!independentAvailable} onClick={()=>latestHuman&&requestIndependent(latestHuman.id)}>
+              {aiBusy?'Both workers responding…':'Ask both independently · 2 calls'}
+            </button>
+            {!independentAvailable&&<p className="nw-small">Requires a new human message with no AI replies and at least one reservation per model.</p>}</>}
+          {aiMode==='verify'&&<><p className="nw-small">Select an existing answer. The opposite AI reviews its FULL text and the original human question; earlier transcript excerpts are limited. One call is required. No automated follow-up.</p>
+            <label>Answer to verify
+              <select value={selectedReview?.id||''} onChange={e=>setReviewEventId(e.target.value)}>
+                {reviewChoices.length===0&&<option value="">No eligible answer (both workers may already have replied)</option>}
+                {reviewChoices.map(e=><option key={e.id} value={e.id}>{e.actor_label} · {new Date(e.created_at).toLocaleString()} · {e.content.slice(0,70)}</option>)}
+              </select>
+            </label>
+            <button type="button" disabled={aiBusy||busy||!selectedReview||!verifyRemaining} onClick={()=>selectedReview&&requestAI(verifyWorker,'verify',selectedReview)}>
+              {aiBusy?'Verifying…':'Verify with '+(verifyWorker==='chatgpt'?'ChatGPT':'Grok')+' · 1 call'}
+            </button>
+            {!selectedReview&&<p className="nw-small">This pilot allows one reply per model per original human message. Existing two-answer threads cannot receive a third reply without starting a new review question.</p>}
+          </>}
+          <p className="nw-small">Costs are provider-based. Short/deep settings change the maximum output and potential cost, not the 10+10 call allowance. Each button requires an explicit human action.</p>
+        </section>
 </>}
       {!active&&<p>Select or create a private room to begin.</p>}
     </section></div>}

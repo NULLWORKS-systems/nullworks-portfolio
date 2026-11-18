@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { normalizedEmail, allowedEmail, isUuid, messageText, roomTitle, inviteTokenValid, displayLabel, originAllowed } from './guards.ts';
+import { normalizedEmail, allowedEmail, isUuid, messageText, roomTitle, inviteTokenValid, displayLabel, originAllowed, validInvitationEmail } from './guards.ts';
 
 test('identity whitelist is explicit and normalized', () => {
   assert.equal(allowedEmail(' JASON@example.test ', 'mason@example.test, jason@example.test'), true);
@@ -31,4 +31,15 @@ test('cross-site writes rejected', () => {
   assert.equal(originAllowed('https://room.test','https://room.test'), true);
   assert.equal(originAllowed('https://evilroom.test','https://room.test'), false);
   assert.equal(originAllowed(null,'https://room.test'), false);
+});
+
+test('room invitations accept normal addresses but reject filter injection and malformed emails',()=>{
+  assert.equal(validInvitationEmail('jasonrrains@gmail.com'),true);
+  assert.equal(validInvitationEmail('guest+test@agency.example'),true);
+  assert.equal(validInvitationEmail('guest,role=owner@example.com'),false);
+  assert.equal(validInvitationEmail('Guest@example.com'),false); // normalize before validation
+  assert.equal(validInvitationEmail('guest@foo..com'),false);
+  assert.equal(validInvitationEmail('guest@foo.-com'),false);
+  assert.equal(validInvitationEmail('guest@example.com,room_id=all'),false);
+  assert.equal(validInvitationEmail('a'.repeat(300)+'@example.com'),false);
 });

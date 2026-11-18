@@ -30,3 +30,11 @@ export function originAllowed(origin: string | null, expectedOrigin: string): bo
   if (!origin) return false;
   try { return new URL(origin).origin === expectedOrigin; } catch { return false; }
 }
+
+export function validInvitationEmail(value: unknown): value is string {
+  if (typeof value !== 'string' || value.length > 254) return false;
+  // Conservative email format because the value also enters a PostgREST filter.
+  if (!/^[a-z0-9._%+-]{1,64}@[a-z0-9.-]{1,240}\.[a-z]{2,63}$/.test(value)) return false;
+  const [,domain] = value.split('@');
+  return !domain.includes('..') && !domain.startsWith('.') && !domain.includes('.-') && !domain.includes('-.');
+}

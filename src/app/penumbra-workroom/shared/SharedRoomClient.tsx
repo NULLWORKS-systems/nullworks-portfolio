@@ -2,7 +2,7 @@
 
 import { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
 
-type User = { id:string; email:string; name:string };
+type User = { id:string; email:string; name:string; isOperator?:boolean };
 type Room = { id:string; title:string; owner_user_id:string; created_at:string };
 type Event = { id:string; room_id:string; actor_label:string; actor_type:'human'|'ai'|'system'; content:string; created_at:string; model:string|null; parent_event_id:string|null };
 type JsonResponse = { error?:string; [key:string]:any };
@@ -31,7 +31,6 @@ export default function SharedRoomClient() {
   const [newRoom,setNewRoom] = useState('Jason + Mason + ChatGPT + Grok');
   const [message,setMessage] = useState('');
   const [inviteEmail,setInviteEmail] = useState('');
-  const [inviteUrl,setInviteUrl] = useState('');
   const [notice,setNotice] = useState('');
   const [error,setError] = useState('');
   const [busy,setBusy] = useState(false);
@@ -70,7 +69,8 @@ export default function SharedRoomClient() {
     mounted.current=true;
     const params = new URLSearchParams(location.search);
     const room=params.get('room'),token=params.get('invite');
-    if(room && token){setJoin({room,token});history.replaceState(null,'',location.pathname+location.hash);}
+    const pendingInvite=room && token ? {room,token} : null;
+    if(pendingInvite){setJoin(pendingInvite);history.replaceState(null,'',location.pathname+location.hash);}
     (async()=>{
       const hash = new URLSearchParams(location.hash.replace(/^#/,''));
       const accessToken=hash.get('access_token'),refreshToken=hash.get('refresh_token');
@@ -80,6 +80,13 @@ export default function SharedRoomClient() {
       }
       const r=await api('/auth/me');
       setUser(r.user as User);
+      if(pendingInvite){
+        try {
+          await api(`/rooms/${pendingInvite.room}/join`,'POST',{token:pendingInvite.token});
+          setJoin(null);
+          setNotice('Invitation accepted. Your room is ready.');
+        } catch(e) {setError('Could not join the invited room: '+(e as Error).message);}
+      }
       await loadRooms();
     })().catch((e)=>{if(location.hash.includes('error='))setError('The sign-in link expired or was rejected. Request another one.');}).finally(()=>setInitializing(false));
   },[loadRooms]);
@@ -89,7 +96,6 @@ export default function SharedRoomClient() {
     lastEventCount.current=0;
     setEvents([]);
     setUnread(0);
-    setInviteUrl('');
     setInviteEmail('');
     setHivePreview(null);
     if(user && active.owner_user_id===user.id){
@@ -109,7 +115,15 @@ export default function SharedRoomClient() {
     e.preventDefault();
     void run(async()=>{
       if(!codeSent){await api('/auth/start','POST',{email,join});setCodeSent(true);setNotice('Sign-in email requested. Open its magic link, or enter the code if one is included.');}
-      else {const r=await api('/auth/verify','POST',{email,token:otp});setUser(r.user as User);await loadRooms();setNotice('Signed in.');}
+      else {
+        const r=await api('/auth/verify','POST',{email,token:otp});
+        setUser(r.user as User);
+        if(join){
+          await api(`/rooms/${join.room}/join`,'POST',{token:join.token});
+          setJoin(null);
+        }
+        await loadRooms();setNotice('Signed in and room access confirmed.');
+      }
     });
   }
   async function signOut(){await run(async()=>{await api('/auth/logout','POST',{});setUser(null);setRooms([]);setActive(null);setEvents([]);setCodeSent(false);setOtp('');setJoin(null);});}
@@ -143,8 +157,8 @@ export default function SharedRoomClient() {
   }
   function createInvite(e:FormEvent){e.preventDefault();if(!active)return;void run(async()=>{
     const res=await api(`/rooms/${active.id}/invite`,'POST',{email:inviteEmail});
-    setInviteUrl(String(res.inviteUrl||''));
-    setNotice('Private invitation prepared, NOT sent. Share it only after authorizing recipient and channel.');
+    setInviteEmail('');
+    setNotice('Magic-link invitation requested for '+res.recipient+'. The link is limited to this room.');
   });}
   function previewHive(){if(!active)return;void run(async()=>{
     const res=await api(`/rooms/${active.id}/hive`,'POST',{action:'preview',path:hivePath.trim()});
@@ -167,7 +181,7 @@ export default function SharedRoomClient() {
     events.some(a=>a.actor_type==='ai' && a.actor_label==='ChatGPT' && a.parent_event_id===e.id) &&
     !events.some(a=>a.actor_type==='ai' && a.actor_label==='Grok' && a.parent_event_id===e.id));
   return <main className="nw-shared">
-    <header className="nw-shared-header"><div><span className="eyebrow">NULLWORKS / PENUMBRA</span><h1>Shared workroom</h1><p>Mason · Jason · ChatGPT · Grok</p></div>{user&&<button type="button" onClick={signOut}>Sign out</button>}</header>
+    <header className="nw-shared-header"><div><span className="eyebrow">NULLWORKS / PENUMBRA</span><h1>Shared workroom</h1><p>Mason · Jason · ChatGPT · Grok</p></div><div className="nw-header-actions">{user?.isOperator&&<a className="nw-access-link" href="/penumbra-workroom/access">Access Portal</a>}{user&&<button type="button" onClick={signOut}>Sign out</button>}</div></header>
     <div className="nw-shared-note">Private, member-only text room. ChatGPT and Grok respond only when requested. The owner can explicitly attach sourced, read-only Hive evidence; private repository credentials never reach the AI seats or participants.</div>
     {initializing&&<p>Checking your session…</p>}
     {!initializing&&!user&&<section className="nw-panel nw-auth"><h2>Sign in by email</h2><p>Only approved participant email addresses can sign in. Use the email magic link or an included verification code. No password needed.</p>
@@ -177,7 +191,7 @@ export default function SharedRoomClient() {
       {codeSent&&<button type="button" onClick={()=>{setCodeSent(false);setOtp('');}}>Change email</button>}</form></section>}
     {user&&<div className="nw-layout"><aside className="nw-panel nw-sidebar"><div className="nw-small">Signed in as <b>{user.name}</b></div><h2>Rooms</h2>
       {rooms.map(room=><button type="button" key={room.id} className={'nw-room-choice '+(room.id===active?.id?'selected':'')} onClick={()=>setActive(room)}>{room.title}</button>)}
-      <form onSubmit={createRoom} className="nw-stack"><label>Create private room <input value={newRoom} maxLength={120} onChange={e=>setNewRoom(e.target.value)}/></label><button disabled={busy}>Create room</button></form>
+      {user?.isOperator&&<form onSubmit={createRoom} className="nw-stack"><label>Create private room <input value={newRoom} maxLength={120} onChange={e=>setNewRoom(e.target.value)}/></label><button disabled={busy}>Create room</button></form>}
       {join&&<div className="nw-pending"><b>Pending invitation</b><p>An invite link was opened for this account.</p><button disabled={busy} onClick={joinRoom}>Accept invitation</button></div>}
       {owner&&active&&<section className="nw-stack nw-hive">
         <h3>Private Hive Brain</h3>
@@ -195,8 +209,8 @@ export default function SharedRoomClient() {
           <button type="button" className="nw-primary" disabled={busy} onClick={shareHive}>Approve sharing this evidence with room</button>
         </div>}
       </section>}
-      {owner&&<form onSubmit={createInvite} className="nw-stack nw-invite"><h3>Invite Jason</h3><label>Approved email <input type="email" required value={inviteEmail} onChange={e=>setInviteEmail(e.target.value)}/></label><button disabled={busy}>Prepare invite link</button>
-        {inviteUrl&&<><textarea readOnly rows={3} value={inviteUrl} aria-label="Private invitation link"/><button type="button" onClick={()=>navigator.clipboard.writeText(inviteUrl)}>Copy link</button><small>Not sent. Single-use, expires in 24 hours.</small></>}</form>}
+      {owner&&<form onSubmit={createInvite} className="nw-stack nw-invite"><h3>Invite a participant</h3><label>Participant email <input type="email" required value={inviteEmail} onChange={e=>setInviteEmail(e.target.value)} placeholder="person@example.com"/></label><button disabled={busy}>Email invitation to this room</button>
+        <small>Explicit click sends the email. Each invite is single-use and expires after 24 hours.</small><a className="nw-access-link" href="/penumbra-workroom/access">Manage all rooms and people</a></form>}
     </aside><section className="nw-panel nw-room"><div className="nw-room-top"><div><h2>{active?.title||'Select a room'}</h2><div className="nw-small">{active?'Messages are stored in the shared database':'Create a room to start'}</div></div><span className="nw-presence">● Signed-in room</span></div>
       {active&&<><div className="nw-thread" role="log" aria-live="polite" onScroll={()=>setUnread(0)}>
         {events.length===0&&<p className="nw-empty">No messages yet. Say hello.</p>}

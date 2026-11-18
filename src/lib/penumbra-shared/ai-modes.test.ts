@@ -21,7 +21,7 @@ test('independent mode requires both workers to be blind to current parent answe
  assert.equal(independentEligible([chat],'human-1'),false);
  const prompt=buildModePrompt({worker:'grok',mode:'independent',parentId:'human-1',
   events:[human,chat],approvedEvidence:[]});
- assert.ok(prompt.every(m=>m.role!=='assistant'));
+ assert.equal((prompt.map(m=>m.role) as string[]).includes('assistant'),false);
  assert.ok(!prompt.some(m=>m.content.includes('Full answer: stop')));
  assert.ok(prompt.some(m=>m.content.includes('No other worker answer')));
 });

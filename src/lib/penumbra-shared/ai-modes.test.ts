@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { buildModePrompt, independentEligible, outputLimit, validMode, validDepth } from './ai-modes.ts';
 import type { SeatEvent } from './ai-seat-prompt.ts';
 const human:SeatEvent={id:'human-1',parent_event_id:null,actor_type:'human',actor_label:'Human',
- provider:null,content:'Explain how the machine's safety interlocks work.'};
+ provider:null,content:"Explain how the machine\'s safety interlocks work."};
 const chat:SeatEvent={id:'chat-1',parent_event_id:'human-1',actor_type:'ai',actor_label:'ChatGPT',
  provider:'openai',content:'Full answer: stop, isolate, verify, document. '.repeat(30)};
 const grok:SeatEvent={id:'grok-1',parent_event_id:'human-1',actor_type:'ai',actor_label:'Grok',

@@ -3,7 +3,7 @@ import { fetchHiveEvidence, HIVE_STARTERS, validHivePath } from '@/lib/penumbra-
 import { NextRequest, NextResponse } from 'next/server';
 import {
   allowedEmail, displayLabel, inviteTokenValid, isUuid,
-  messageText, normalizedEmail, originAllowed, roomTitle,
+  messageText, normalizedEmail, originAllowed, roomTitle, validInvitationEmail,
 } from '@/lib/penumbra-shared/guards';
 
 export const runtime = 'nodejs';
@@ -33,13 +33,10 @@ function allowed(email: string): boolean { return allowedEmail(email, required('
 function isOperator(user: User): boolean {
   return normalizedEmail(user.email) === normalizedEmail(required('PENUMBRA_MASON_EMAIL'));
 }
-function emailValid(email: string): boolean {
-  return email.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-}
 /** Original allowlist remains for existing users. Additional email identities
  * require an active room invitation or an existing room membership. */
 async function authorizedEmailForStart(email: string): Promise<boolean> {
-  if (!emailValid(email)) return false;
+  if (!validInvitationEmail(email)) return false;
   if (allowed(email)) return true;
   const invites = await supabase(
     '/rest/v1/penumbra_room_invites?select=room_id,used_by,expires_at&invitee_email=eq.' +
@@ -57,7 +54,7 @@ async function authorizedEmailForStart(email: string): Promise<boolean> {
   return false;
 }
 async function authorizedUser(user: User): Promise<boolean> {
-  if (!isUuid(user?.id) || !emailValid(normalizedEmail(user?.email))) return false;
+  if (!isUuid(user?.id) || !validInvitationEmail(normalizedEmail(user?.email))) return false;
   if (allowed(user.email)) return true;
   const members = await supabase('/rest/v1/penumbra_room_members?select=room_id&user_id=eq.'+
     user.id+'&limit=1','GET',undefined,{admin:true}) as unknown[];
@@ -379,7 +376,7 @@ async function handle(req: NextRequest, parts: string[], method: 'GET'|'POST'): 
     }
     const body = await readBody(req);
     const email = normalizedEmail(body.email);
-    if (!emailValid(email) || email === normalizedEmail(session.user.email)) {
+    if (!validInvitationEmail(email) || email === normalizedEmail(session.user.email)) {
       throw new ApiError(400,'Enter a valid email for a different participant');
     }
     // Check whether the address is already a member of this exact room.

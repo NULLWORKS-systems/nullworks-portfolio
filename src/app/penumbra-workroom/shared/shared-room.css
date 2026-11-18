@@ -33,3 +33,5 @@
 .nw-pilot-counts span{background:#193c44;border-radius:7px;padding:6px 9px;}
 .nw-pilot-counts strong{color:#9becde;}
 .nw-pilot-status small{color:#b6ccd5;}
+
+.nw-seat-warning{border-left:3px solid #e6b85c;padding:8px 10px;border-radius:5px;background:#382b21;color:#ffe4bd;font-weight:600;font-size:.82rem;margin:8px 0;}

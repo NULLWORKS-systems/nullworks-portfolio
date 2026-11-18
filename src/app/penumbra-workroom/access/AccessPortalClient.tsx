@@ -154,7 +154,7 @@ export default function AccessPortalClient() {
         {access?.invites.length===0&&<p className="nw-small">No invitations for this room.</p>}
         {access?.invites.map(invite=><div key={invite.id} className="nw-access-entry">
           <div><b className="nw-break">{invite.invitee_email}</b>
-            <div className="nw-small">{inviteStatus(invite,access.members)}</div>
+            <div className="nw-small">{inviteStatus(invite,access?.members||[])}</div>
             <div className="nw-small">Created {new Date(invite.created_at).toLocaleString()}</div>
           </div>
           {!invite.used_by&&!invite.revoked_at&&Date.parse(invite.expires_at)>Date.now()&&

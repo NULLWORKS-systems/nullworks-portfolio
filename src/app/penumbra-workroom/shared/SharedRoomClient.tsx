@@ -1,6 +1,7 @@
 'use client';
 
 import { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
+import { foreignSeatClaim } from '@/lib/penumbra-shared/ai-seat-prompt';
 
 type User = { id:string; email:string; name:string; isOperator?:boolean };
 type Room = { id:string; title:string; owner_user_id:string; created_at:string };
@@ -217,6 +218,9 @@ export default function SharedRoomClient() {
         {events.length===0&&<p className="nw-empty">No messages yet. Say hello.</p>}
         {events.map(event=><article key={event.id} className={'nw-entry '+(event.actor_type==='ai'?'nw-ai':event.actor_type==='system'?'nw-hive-entry':'')}>
           <div className="nw-meta"><b>{event.actor_label}</b>{event.actor_type==='ai'&&<span>AI · {event.model||'model unspecified'}</span>}<time dateTime={event.created_at}>{new Date(event.created_at).toLocaleString()}</time></div>
+          {event.actor_type==='ai'&&(event.actor_label==='ChatGPT'||event.actor_label==='Grok')&&
+            foreignSeatClaim(event.actor_label==='ChatGPT'?'chatgpt':'grok',event.content)&&
+            <p className="nw-seat-warning">Identity mismatch: this reply claims another AI's identity. The model badge reflects the provider used, but the text is unreliable. Historical record retained for audit.</p>}
           <p>{event.content}</p></article>)}<div ref={bottom}/></div>
         {unread>0&&<p className="nw-small">{unread} newer message(s)</p>}
         <form className="nw-compose" onSubmit={sendMessage}><label htmlFor="nw-msg">Message</label><textarea id="nw-msg" value={message} onChange={e=>setMessage(e.target.value)} placeholder="Add a message visible to both humans…" maxLength={4000} rows={3} required />
